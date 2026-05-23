@@ -3,8 +3,16 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Olives BI — Environmental intelligence platform guiding governments and communities to protect forests, wetlands, rivers, and land from district to global scale.">
-    <title>Olives BI — Environmental Protection Intelligence</title>
+    @include('partials.public-seo', [
+        'seoTitle' => 'Olives BI - Environmental Protection Intelligence, GIS & Revenue Data Platform',
+        'seoDescription' => 'Olives BI is an environmental intelligence platform for protecting forests, wetlands, rivers, land, air quality, and local revenue systems with GIS, open data, and decision dashboards.',
+        'seoKeywords' => 'Olives BI, environmental protection intelligence, GIS platform, land data, forest reserve protection, Ramsar wetlands, air quality, waste management, local government revenue, IGF Ghana, district assembly software',
+        'seoUrl' => route('auth.LandingPage'),
+        'seoSchema' => [
+            '@type' => 'WebPage',
+            'primaryImageOfPage' => asset('assets/images/locality/ramsar-wetland.jpg'),
+        ],
+    ])
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

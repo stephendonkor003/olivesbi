@@ -3,8 +3,25 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Check Locality — Olives BI Environmental Intelligence</title>
-    <meta name="description" content="Check real-time environmental conditions for any location — air quality, hazards, waste sites, land use and more.">
+    @include('partials.public-seo', [
+        'seoTitle' => 'Check Locality - Air Quality, Waste, Hazards & Environmental Data | Olives BI',
+        'seoDescription' => 'Check any locality with Olives BI for air quality, weather, elevation, soil, biodiversity, waste sites, businesses, waterways, hazards, and environmental risk using open data and maps.',
+        'seoKeywords' => 'check locality, air quality checker, environmental risk map, waste management companies, open street maps environmental data, biodiversity data, soil data, locality intelligence Ghana, Olives BI locality',
+        'seoUrl' => route('locality.check'),
+        'seoMainEntity' => [
+            '@type' => 'WebApplication',
+            'name' => 'Olives BI Check Locality',
+            'applicationCategory' => 'EnvironmentalApplication',
+            'operatingSystem' => 'Web',
+            'featureList' => [
+                'Air quality data',
+                'Waste management mapping',
+                'Environmental hazards',
+                'OpenStreetMap locality search',
+                'Soil, elevation and biodiversity open data',
+            ],
+        ],
+    ])
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

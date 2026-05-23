@@ -3,8 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Get Started - Olives BI</title>
-    <meta name="description" content="Create an Olives BI account and subscribe to environmental and revenue intelligence updates.">
+    @include('partials.public-seo', [
+        'seoTitle' => 'Create an Olives BI Account - Environmental Intelligence Signup',
+        'seoDescription' => 'Register for Olives BI to access environmental intelligence, locality checks, revenue data tools, and newsletter updates for land, waste, air quality, and public service insights.',
+        'seoKeywords' => 'Olives BI registration, create Olives BI account, environmental intelligence signup, land data platform account, waste management updates, air quality updates, local revenue platform',
+        'seoUrl' => route('auth.register'),
+        'seoRobots' => 'index, follow, max-image-preview:large',
+        'seoSchema' => [
+            'potentialAction' => [
+                '@type' => 'RegisterAction',
+                'target' => route('auth.register'),
+            ],
+        ],
+        'seoMainEntity' => [
+            '@type' => 'SoftwareApplication',
+            'name' => 'Olives BI',
+            'applicationCategory' => 'BusinessApplication',
+            'operatingSystem' => 'Web',
+            'offers' => [
+                '@type' => 'Offer',
+                'price' => '0',
+                'priceCurrency' => 'USD',
+            ],
+        ],
+    ])
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

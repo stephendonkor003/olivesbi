@@ -3,8 +3,22 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Support Olives BI — Environmental Protection Donations</title>
-    <meta name="description" content="Donate to Olives BI and help protect forests, wetlands, rivers and land worldwide.">
+    @include('partials.public-seo', [
+        'seoTitle' => 'Support Olives BI - Donate to Environmental Protection & Open Data',
+        'seoDescription' => 'Donate to Olives BI to support environmental protection, open data, forest and wetland monitoring, waste management intelligence, and community climate resilience tools.',
+        'seoKeywords' => 'donate environmental protection, support Olives BI, forest protection donation, wetland conservation donation, environmental open data, climate resilience support, waste management intelligence',
+        'seoUrl' => route('donation.index'),
+        'seoSchema' => [
+            'potentialAction' => [
+                '@type' => 'DonateAction',
+                'recipient' => [
+                    '@type' => 'Organization',
+                    'name' => 'Olives BI',
+                ],
+                'target' => route('donation.index'),
+            ],
+        ],
+    ])
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

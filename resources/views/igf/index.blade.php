@@ -3,8 +3,22 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Business We Support — IGF &amp; Land Revenue Intelligence | Olives BI</title>
-    <meta name="description" content="How Olives BI helps governments unlock Internally Generated Funds through land data — building permits, business licences, market tolls, land registration and more.">
+    @include('partials.public-seo', [
+        'seoTitle' => 'IGF & Land Revenue Intelligence for Local Governments | Olives BI',
+        'seoDescription' => 'See how Olives BI supports internally generated funds with land revenue intelligence for building permits, business licences, property rates, market tolls, land registration, and GIS-backed compliance.',
+        'seoKeywords' => 'IGF software Ghana, local government revenue platform, land revenue intelligence, property rates software, building permit revenue, business licence management, district assembly revenue, GIS revenue system',
+        'seoUrl' => route('igf.index'),
+        'seoMainEntity' => [
+            '@type' => 'Service',
+            'name' => 'Olives BI IGF and Land Revenue Intelligence',
+            'serviceType' => 'Local government revenue intelligence and GIS platform',
+            'provider' => [
+                '@type' => 'Organization',
+                'name' => 'Olives BI',
+            ],
+            'areaServed' => 'Ghana',
+        ],
+    ])
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
