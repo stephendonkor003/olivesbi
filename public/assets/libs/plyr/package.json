@@ -71,7 +71,7 @@
     "prettier-stylelint": "^0.4.2",
     "remark-cli": "^11.0.0",
     "remark-validate-links": "^12.1.0",
-    "rollup": "^3.3.0",
+    "rollup": "^4.60.4",
     "rollup-plugin-babel": "^4.4.0",
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-node-resolve": "^5.2.0",
