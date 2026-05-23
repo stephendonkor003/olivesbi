@@ -1,0 +1,65 @@
+@use "variables";
+/* Start:: widgets */
+[dir="ltr"] {
+    #views .apexcharts-yaxis {
+        transform: translate(0, 0);
+    }
+}
+
+.widget-card-balance {
+    z-index: 0;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.7) !important;
+    &::before {
+      position: absolute;
+      content: "";
+      inset-inline-start: -6rem;
+      inset-block-start: 9rem;
+      width: 30rem;
+      height: 10rem;
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-image: url(../images/media/media-68.png);
+      z-index: -1;
+      opacity: 0.2;
+      transform: rotate(38deg);
+    }
+    &:after {
+      position: absolute;
+      content: "";
+      width: 100%;
+      height: 100%;
+      background-color: rgba(var(--primary-rgb), 0.75);
+      z-index: -1;
+    }
+  }
+  .widget-profile {
+    position: absolute;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    width: 7rem;
+    height: 7rem;
+    inset-block-start: 2rem;
+    z-index: 1;
+  }
+  .widget-profile-bg {
+    position: relative;
+    z-index: 0;
+    background-image: url("../images/media/media-83.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    &::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        background-color: rgba(0, 0, 0, 0.3);
+    }
+  }
+  .widget-product-img {
+    height: 8rem;
+  }
+  /* End:: widgets */

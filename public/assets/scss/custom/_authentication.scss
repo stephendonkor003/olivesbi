@@ -1,0 +1,286 @@
+@use "variables";
+/* Start:: authentication */
+.authentication {
+  min-height: 100vh;
+  .authentication-brand {
+    &.desktop-logo {
+      display: block;
+    }
+    &.desktop-white {
+      display: none;
+    }
+  }
+  .authentication-cover {
+    background-image: url(../images/authentication/3.jpg);
+    background-position: center;
+    background-repeat: repeat;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 0;
+
+    &:before {
+      position: absolute;
+      content: "";
+      width: 100%;
+      height: 100%;
+      inset-inline-start: 0;
+      inset-inline-end: 0;
+      inset-block-start: 0;
+      inset-block-end: 0;
+      background-color: variables.$primary-08;
+      z-index: -1;
+    }
+    &:after {
+      position: absolute;
+      content: "";
+      width: 100%;
+      height: 100%;
+      inset-inline-start: 0;
+      inset-inline-end: 0;
+      inset-block-start: 0;
+      inset-block-end: 0;
+      background-color: rgba(0, 0, 0, 0.2);
+      z-index: -1;
+    }
+    .aunthentication-cover-content {
+      width: 75%;
+      padding: 2rem;
+    }
+  }
+  &.authentication-basic {
+    .desktop-white {
+      display: none;
+    }
+    .desktop-logo {
+      display: block;
+    }
+  }
+}
+[data-theme-mode="dark"] {
+  .authentication {
+    &.authentication-basic {
+      .desktop-white {
+        display: block;
+      }
+      .desktop-logo {
+        display: none;
+      }
+    }
+    .authentication-brand {
+      &.desktop-logo {
+        display: none;
+      }
+      &.desktop-white {
+        display: block;
+      }
+    }
+  }
+}
+.authentication {
+  .desktop-logo,
+  .desktop-white {
+    height: 2rem;
+    line-height: 2rem;
+  }
+}
+///coming soon page
+
+.auth-social-icons.btn.btn-outline-light:focus,
+.auth-social-icons.btn.btn-outline-light:focus {
+  color: #fff !important;
+  box-shadow: none;
+}
+.auth-social-icons.btn.btn-outline-light {
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  &:hover {
+   color: #fff !important;
+   background-color: rgba(255, 255, 255, 0.15) !important;
+   border-color: rgba(255, 255, 255, 0.5) !important;
+  }
+}
+.authentication-cover-comingsoon {
+  .coming-soon-logo {
+    position: absolute;
+    top: 30px;
+    inset-inline-start: 30px;
+  }
+  .coming-soon-footer {
+    position: absolute;
+    bottom: 30px;
+    width: 100%;
+    padding-inline-start: 30px;
+    padding-inline-end: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+}
+.coming-soon-row {
+  .authentication-cover-comingsoon {
+    z-index: 0;
+    background-image: url(../images/authentication/1.jpg);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+
+    &:before {
+      position: absolute;
+      content: "";
+      width: 100%;
+      height: 100%;
+      inset-inline-start: 0;
+      inset-inline-end: 0;
+      inset-block-start: 0;
+      inset-block-end: 0;
+      background-color: rgba(0, 0, 0, 0.1);
+      z-index: -1;
+    }
+  }
+}
+
+#snow-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+
+.snowflake {
+  position: absolute;
+  background: variables.$white;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.5;
+  will-change: transform;
+  animation-name: fall;
+  animation-timing-function: linear;
+  z-index: -1;
+}
+
+@keyframes fall {
+  0% {
+      transform: translateY(0);
+      opacity: 1;
+  }
+  100% {
+      transform: translateY(100vh);
+      opacity: 0;
+  }
+}
+.authentication-time-count {
+  .timer-content {
+    border: 5px dotted rgba(255, 255, 255, 0.2);
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+}
+.coming-soon-maincontent {
+  margin-block-start: 6rem;
+  margin-block-end: 7rem;
+}
+
+@media (min-width: 992px) {
+  .coming-soon-maincontent {
+    margin-block-start: 5rem;
+    margin-block-end: 3rem;
+  }
+}
+
+.coming-soon-maincontent {
+  padding: 1rem 1.25rem;
+}
+.authentication.coming-soon-row {
+  .authentication-cover-comingsoon:before {
+    background-color: variables.$primary-07;
+  }
+  .authentication-cover-comingsoon:after {
+    position: absolute;
+    content: "";
+    width: 100%;
+    height: 100%;
+    inset-inline-start: 0;
+    inset-inline-end: 0;
+    inset-block-start: 0;
+    inset-block-end: 0;
+    background-color: rgba(0, 0, 0, 0.35);
+    z-index: -1;
+  }
+}
+
+.authentication-background {
+  background: url(../images/authentication/2.jpg);
+  background-size: cover;
+  position: relative;
+  z-index: 0;
+  &::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0;
+    inset-block-start: 0;
+    width: 100%;
+    height: 100%;
+    background-color: variables.$white-7;
+  }
+  &::after {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0;
+    inset-block-start: 0;
+    width: 100%;
+    height: 100%;
+    background-color: variables.$primary-01;
+    z-index: -1;
+  }
+}
+.authentication-cover-right {
+  background-size: cover;
+  position: relative;
+  z-index: 0;
+  &::before {
+    position: absolute;
+    inset-inline-start: 0;
+    inset-block-start: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+  }
+
+}
+.authentication-cover-main {
+  background-image: url(../images/authentication/7.png);
+  background-position: center;
+  background-repeat: repeat;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 0;
+}
+.lock-icon-auth {
+  font-size: 8rem;
+  color: variables.$primary;
+  opacity: 0.075;
+  inset-inline-start: -2rem;
+  inset-block-start: 5rem;
+}
+/* End:: authentication */

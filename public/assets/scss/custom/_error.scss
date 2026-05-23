@@ -1,0 +1,48 @@
+@use "variables";
+/* Start:: error */
+.error-page {
+    position: relative;
+    z-index: 0;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-image: url(../images/authentication/4.jpg);
+    &::before {
+        content: "";
+        position: absolute;
+        inset-inline-start: 0;
+        inset-block-start: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        z-index: -1;
+    }
+    &::after {
+        content: "";
+        position: absolute;
+        inset-inline-start: 0;
+        inset-block-start: 0;
+        width: 100%;
+        height: 100%;
+        background-color: variables.$primary-03;
+        z-index: -1;
+    }
+}
+.error-text {
+    font-size: 7.5rem;
+    font-weight: 600;
+    line-height: 1;
+    font-family: "Lobster", sans-serif;
+    letter-spacing: 7px;
+}
+@media (max-width: 575.98px) {
+    .error-text {
+        font-size: 3rem;
+    }
+}
+/* End:: error */

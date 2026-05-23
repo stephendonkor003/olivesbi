@@ -1,0 +1,867 @@
+@use "variables";
+/* Start:: dashboard_styles */
+/* Sales Dashboard */
+#revenue-statistics {
+  .apexcharts-pie text {
+    fill: variables.$default-text-color;
+  }
+  .apexcharts-radialbar {
+    .apexcharts-text.apexcharts-datalabel-label {
+      fill: variables.$default-text-color;
+    }
+  }
+}
+.circle-content { 
+  position: relative;
+  i {
+    position: absolute;
+    top: 22px;
+    inset-inline-end: 22px;
+  }
+}
+#income,#expense {
+  .apexcharts-radialbar-hollow {
+    fill: transparent;
+  }
+}
+.revenue-statistics {
+  position: relative;
+  .chart-circle-value {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    box-shadow: 0px 4px 16px rgba(0,0,0,0.05);
+    left: 0;
+    right: 0;
+    top: 20px;
+    margin: auto;
+    bottom: 0;
+  }
+}
+[data-theme-mode="dark"] {
+  .revenue-statistics {
+    .chart-circle-value {
+      box-shadow: 3px 3px 16px rgba(255,255,255,0.05);
+    }
+  }
+}
+.recent-activity-list {
+  margin-block-end: 0;
+  position: relative;
+  li {
+    margin-block-end: 1.1rem;
+    padding-inline-start: 1.5rem;
+    position: relative;
+    &:before {
+      content: "";
+      position: absolute;
+      width: 3px;
+      height: 12px;
+      border-radius: 10px;
+      inset-inline-start: 3px;
+      inset-block-start: 6px;
+    }
+    &:after {
+      content: "";
+      position: absolute;
+      width: 1px;
+      height: 100%;
+      inset-inline-start: 0.25rem;
+      border-inline-start: 1px solid variables.$default-border;
+      top: 22px;
+    }
+    &:nth-child(1):before {
+      background-color: variables.$primary;
+      box-shadow: 0px 0px 0px 4px var(--primary02);
+    }
+    &:nth-child(2):before {
+      background-color: variables.$secondary;
+      box-shadow: 0px 0px 0px 4px rgba(var(--secondary-rgb), 0.2);
+    }
+    &:nth-child(3):before {
+      background-color: variables.$success;
+      box-shadow: 0px 0px 0px 4px rgba(var(--success-rgb), 0.2);
+    }
+    &:nth-child(4):before {
+      background-color: variables.$pink;
+      box-shadow: 0px 0px 0px 4px rgba(var(--pink-rgb), 0.2);
+    }
+    &:nth-child(5):before {
+      background-color: variables.$info;
+      box-shadow: 0px 0px 0px 4px rgba(var(--info-rgb), 0.2);
+    }
+    &:nth-child(6):before {
+      background-color: variables.$danger;
+      box-shadow: 0px 0px 0px 4px rgba(var(--danger-rgb), 0.2);
+    }
+    &:last-child {
+      margin-block-end: 0;
+      &:after {
+        display: none;
+      }
+    }
+  }
+}
+.country-stats-list {
+  margin-block-end: 0;
+  li {
+    margin-block-end: 1.55rem;
+    &:last-child {
+      margin-block-end: 0;
+    }
+  }
+}
+ul.top-products-list {
+  margin-block-end: 0;
+  li {
+    margin-block-end: 1.4rem;
+    &:last-child {
+      margin-block-end: 0;
+    }
+  }
+}
+.valuable-customers-list {
+  margin-block-end: 0;
+  li {
+    margin-block-end: 0.7rem;
+    &:last-child {
+      margin-block-end: 0;
+    }
+  }
+}
+ul.sales-traffic-list {
+  margin-block-end: 0;
+  li {
+    margin-block-end: 0.75rem;
+    position: relative;
+    padding-inline-start: 1.1rem;
+    &:before {
+      content: "";
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      inset-inline-start: 0;
+      inset-block-start: 6px;
+      border-radius: 50%;
+    }
+    &:nth-child(1):before {
+      background-color: variables.$primary;
+    }
+    &:nth-child(2):before {
+      background-color: variables.$secondary;
+    }
+    &:nth-child(3):before {
+      background-color: variables.$success;
+    }
+    &:last-child {
+      margin-block-end: 0;
+    }
+  }
+}
+.profit-analysis-card {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+.card.custom-card.income-card,.card.custom-card.expense-card {
+  overflow: hidden;
+  z-index: 1;
+  &:before {
+    position: absolute;
+    content: "";
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+  }
+}
+.income-card{
+  &:before {
+    background-color: rgba(var(--success-rgb), 0.2);
+  }
+}
+.expense-card{
+  &:before {
+    background-color: rgba(var(--secondary-rgb), 0.25);
+  }
+}
+#profit-analysis1,#profit-analysis2 {
+  position: absolute;
+  bottom: 0;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
+}
+#profit-analysis {
+  position: relative;
+  z-index: 2;
+}
+#profit-analysis,#profit-analysis2 {
+  z-index: 1;
+}
+#profit-analysis1 {
+  z-index: 3;
+}
+.browser-statistics-list {
+  margin-block-end: 0;
+  li {
+    margin-block-end: 1.15rem;
+    &:last-child {
+      margin-block-end: 0;
+    }
+    .border-dashed {
+      border-style: dashed !important;
+    }
+  }
+}
+#expenditure-chart,#income-chart {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  z-index: -1;
+}
+#revenue-statistics1 {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  z-index: 1;
+}
+/* Sales Dashboard */
+
+/* Crypto Dashboard */
+#btc-marketcap {
+  .apexcharts-svg, .apexcharts-canvas {
+    width: auto !important;
+  }
+}
+/* Crypto Dashboard */
+/* jobs Dashboard */
+#candidates-chart {
+  .apexcharts-pie text {
+    fill: variables.$default-text-color !important;
+  }
+} 
+/* jobs Dashboard */
+/* NFT Dashboard */
+.nft-cardimg {
+  height: 12.75rem;
+}
+.nft-bal-col {
+  background-color: rgba(var(--primary-rgb), 0.02);
+}
+.nft-main-card {
+  background-image: url(../images/media/media-76.jpg);
+  background-size: cover;
+  position: relative;
+  z-index: 0;
+  &::before{ 
+    position: absolute;
+    content: "";
+    inset-inline-start: 0;
+    inset-block-start: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(var(--primary-rgb), 0.92);
+    z-index: -1;
+  }
+  &::after{ 
+    position: absolute;
+    content: "";
+    inset-inline-start: 0;
+    inset-block-start: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.18);
+    z-index: -1;
+  }
+}
+/* NFT Dashboard */
+/* CRM Dashboard */
+.crm-upgrade-card {
+  background-image: url(../images/media/svg/pattern-2.svg);
+  background-size: cover;
+  position: relative;
+  overflow: hidden;
+  background-position: -5.125rem -6.188rem;
+  z-index: 0;
+  &::before{ 
+    position: absolute;
+    content: "";
+    inset-inline-start: 0;
+    inset-block-start: 0;
+    width: 100%;
+    height: 100%;
+    background-color: variables.$custom-white;
+    opacity: 0.7;
+    z-index: -1;
+  }
+}
+#crmprofit-report {
+  .apexcharts-pie text {
+    fill: variables.$default-text-color;
+  }
+}
+.crm-recent-activity {
+  position: relative;
+  &::before {
+    position: absolute;
+    content: "";
+    width: 2px;
+    background-color: transparent;
+    inset-block-start: 0;
+    inset-inline-start: 1.188rem;
+    border-inline-end: 1px dashed variables.$default-border;
+    height: 96%;
+  }
+}
+/* CRM Dashboard */
+
+/* Analytics Dashboard */
+
+#impression {
+  .apexcharts-pie text {
+    fill: variables.$default-text-color;
+  }
+}
+.analytics-card {
+  position: relative;
+  overflow: hidden;
+  .circles {
+    position: absolute;
+    content: "";
+    inset-inline-end: 0;
+    inset-block-start: 0;
+    div:nth-child(1) {
+      position: absolute;
+      content: "";
+      width: 8rem;
+      height: 8rem;
+      border: 2px dashed rgba(255, 255, 255, 0.08);
+      inset-inline-end: -2rem;
+      inset-block-start: -2rem;
+      border-radius: 50%;
+    }
+    div:nth-child(2) {
+      position: absolute;
+      content: "";
+      width: 13rem;
+      height: 13rem;
+      border: 2px dashed rgba(255, 255, 255, 0.08);
+      inset-inline-end: -2rem;
+      inset-block-start: -2rem;
+      border-radius: 50%;
+    }
+    div:nth-child(3) {
+      position: absolute;
+      content: "";
+      width: 16rem;
+      height: 16rem;
+      border: 2px dashed rgba(255, 255, 255, 0.1);
+      inset-inline-end: -2rem;
+      inset-block-start: -2rem;
+      border-radius: 50%;
+    }
+    div:nth-child(4) {
+      position: absolute;
+      content: "";
+      width: 19rem;
+      height: 19rem;
+      border: 2px dashed rgba(255, 255, 255, 0.1);
+      inset-inline-end: -2rem;
+      inset-block-start: -2rem;
+      border-radius: 50%;
+    }
+  }
+}
+/* Analytics Dashboard */
+
+/* Projects Dashboard */
+.project-cards {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  .svg-image {
+    position: absolute;
+    content: "";
+    inset-inline-end: -6rem;
+    inset-block-start: -3%;
+    width: 18rem;
+    height: 12rem;
+    opacity: 0.05;
+    z-index: -1;
+    background-repeat: no-repeat;
+    transform: rotate(51deg);
+  }
+}
+.projects-active-card {
+  background: linear-gradient(0deg, variables.$primary-01 0%, transparent 13%);
+}
+
+.projects-new-card {
+  background: linear-gradient(0deg, rgba(var(--success-rgb), 0.1) 0%, transparent 13%);
+}
+/* Projects Dashboard */
+
+/* HRM Dashboard */
+  .hrm-small-charts {
+    min-width: 9.1rem;
+  }
+.hrm-main-card {
+  position: relative;
+  overflow: hidden;
+    &:before {
+      content: "";
+      width: 85px !important;
+      height: 85px !important;
+      position: absolute;
+      border-radius: 50%;
+      inset-inline-end: -36px;
+      inset-block-start: -8px;
+      background: rgba(var(--primary-rgb), 0.03);
+      border: 1px solid rgba(var(--primary-rgb), 0.05);
+  }
+  &:after {
+      content: "";
+      width: 100px;
+      height: 100px;
+      position: absolute;
+      border-radius: 50%;
+      inset-inline-end: -17px;
+      inset-block-start: -62px;
+      background: rgba(var(--primary-rgb), 0.03);
+      border: 1px solid rgba(var(--primary-rgb), 0.05);
+  }
+  &.secondary {
+    &:before {
+      background: rgba(var(--secondary-rgb), 0.03);
+      border: 1px solid rgba(var(--secondary-rgb), 0.05);
+    }
+    &:after {
+      background: rgba(var(--secondary-rgb), 0.03);
+      border: 1px solid rgba(var(--secondary-rgb), 0.05);
+    }
+  }
+  &.success {
+    &:before {
+      background: rgba(var(--success-rgb), 0.03);
+      border: 1px solid rgba(var(--success-rgb), 0.05);
+    }
+    &:after {
+      background: rgba(var(--success-rgb), 0.03);
+      border: 1px solid rgba(var(--success-rgb), 0.05);
+    }
+  }
+  &.info {
+    &:before {
+      background: rgba(var(--info-rgb), 0.03);
+      border: 1px solid rgba(var(--info-rgb), 0.05);
+    }
+    &:after {
+      background: rgba(var(--info-rgb), 0.03);
+      border: 1px solid rgba(var(--info-rgb), 0.05);
+    }
+  }
+}
+.hrm-event-content {
+  position: relative;
+  z-index: 0;
+  &::before {
+    position: absolute;
+    content: "";
+    inset-inline-start: -4rem;
+    inset-block-start: 4rem;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-image: url(../images/media/media-68.png);
+    z-index: -1;
+    opacity: 0.125;
+    transform: rotate(38deg);
+  }
+  &::after {
+    position: absolute;
+    content: "";
+    inset-inline-end: -8rem;
+    inset-block-end: 2rem;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-image: url(../images/media/media-68.png);
+    z-index: -1;
+    opacity: 0.09;
+    transform: rotate(37deg);
+  }
+}
+#hiring-src {
+  .apexcharts-pie text {
+    fill: variables.$default-text-color;
+  }
+}
+/* HRM Dashboard */
+
+/* Stocks Dashboard */
+#stockCap {
+    position: relative;
+    top: -1rem;
+   .apexcharts-selection-rect {
+      fill: rgba(0, 0, 0, 0.4);
+  }
+}
+
+#stock-balance {
+  .apexcharts-pie text {
+    fill: variables.$default-text-color;
+  }
+}
+/* Stocks Dashboard */
+
+/* Course Dashboard */
+.course-card {
+  background: url(../images/media/media-67.png) 224px -2px no-repeat, var(--custom-white) !important;
+}
+.course-card-img {
+  height: 11.1198rem;
+}
+#new-visitors {
+  .apexcharts-svg, .apexcharts-canvas {
+    width: auto !important;
+  }
+}
+.latest-courses img {
+  width: 4rem;
+  height: 2.825rem;
+  border-radius: 0.5rem;
+  margin: 0.25rem;
+}
+
+/* Course Dashboard */
+
+/* Medical Dashboard */
+.medical-cards {
+  position: relative;
+  &:before {
+    content: "";
+    position: absolute;
+    top: 0.6rem;
+    inset-inline-start: .75rem;
+    width: 6px;
+    height: 80%;
+    background-color: variables.$primary;
+    box-shadow: 0px 0px 5px variables.$primary-08;
+    border-radius: 6px;
+  }
+  &.secondary:before {
+    background-color: rgba(var(--secondary-rgb), 1);
+    box-shadow: 0px 0px 5px rgba(var(--secondary-rgb), 0.8);
+  }
+  &.success:before {
+    background-color: rgba(var(--success-rgb), 1);
+    box-shadow: 0px 0px 5px rgba(var(--success-rgb), 0.8);
+  }
+  &.info:before {
+    background-color: rgba(var(--info-rgb), 1);
+    box-shadow: 0px 0px 5px rgba(var(--info-rgb), 0.8);
+  }
+}
+#patientsdailyvisit {
+  .apexcharts-radialbar-hollow {
+    fill: rgba(var(--secondary-rgb), 0.2) !important;
+  }
+  .apexcharts-pie text {
+    fill: variables.$secondary;
+  }
+  .apexcharts-radialbar {
+    .apexcharts-text.apexcharts-datalabel-label {
+      fill: variables.$secondary;
+    }
+  }
+}
+.med-upcoming {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    &.nav-link {
+      background-color: rgba(var(--success-rgb), 0.1);
+    }
+} 
+/* Medical Dashboard */
+
+/* POS System Dashboard */
+.pos-category .card.custom-card.active, .pos-category .card.custom-card:hover {
+  background-color: variables.$primary;
+  color: variables.$white;
+  .categories {
+    color: variables.$white;
+  }
+}
+
+.card.custom-card {
+  &.pos-card-items-card {
+    background-color: variables.$primary-005;
+    position: relative;
+    .pos-offer-badge {
+      position: absolute;
+      z-index: 1;
+      top: 1rem;
+      inset-inline-end: 1.5rem;
+      inset-block-start: 1.5rem;
+      display: grid;
+      align-content: stretch;
+      align-items: baseline;
+      justify-items: start;
+    }
+  }
+}
+
+.pos-cart-summary {
+  .product-quantity-container {
+    width: 6.75rem;
+  }
+}
+/* POS sSystem Dashboard */
+
+/* Podcast Dashboard */
+.podcast-banner {
+  background-image: url("../images/podcast/10.jpg");
+  background-repeat: no-repeat;
+  background-size: cover;
+  z-index: 1;
+  &:before {
+    position: absolute;
+    content: "";
+    top: 00;
+    inset-inline-start: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(var(--primary-rgb), 0.8);
+    z-index: -1;
+  }
+}
+.podcast-img img {
+  box-shadow: 1px 1px 15px rgba(0, 0, 0, .3);
+  transform: scaleX(-1);
+}
+.fav-podcast img {
+  width: 3rem;
+  height: 2.85rem;
+  border-radius: 0.8rem;
+  padding: 0.3rem;
+  background: rgba(var(--danger-rgb), 0.1);
+}
+.podcast-recently-played-list {
+  .fav-pod-list {
+    margin-bottom: 1rem;
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+.podcast-author {
+  background: linear-gradient(to left, variables.$light, variables.$primary);
+  padding: 2px;
+  &.secondary {
+    background: linear-gradient(to left, variables.$light, variables.$secondary);
+  }
+  &.success {
+    background: linear-gradient(to left, variables.$light, variables.$success);
+  }
+  &.info {
+    background: linear-gradient(to left, variables.$light, variables.$info);
+  }
+}
+.pod-artist {
+  background-color: rgba(var(--light-rgb), .5);
+}
+.bg-playing-image {
+  background-image: url("../images/podcast/5.png");
+  background-size: cover;
+  width: 100%;
+  background-repeat: no-repeat;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  color: variables.$white;
+  position: relative;
+  z-index: 0;
+    &:before {
+      content: "";
+      position: absolute;
+      inset-inline-start: 0;
+      inset-block-start: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background-color: var(--primary-color);
+      opacity: 0.78;
+  }
+}
+.podcast-playing-progress {
+  width: 100%;
+  background-color: variables.$light;
+}
+.pod-icons {
+  background-color: rgba(255, 255, 255, 0.17);
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+}
+.podcast-played-list {
+  .played-list {
+    margin-bottom: 1rem;
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+.pod-player-img {
+  width: 7rem;
+  height: 7rem;
+  display: inline-flex;
+}
+/* Podcast Dashboard */
+
+/* School Dashboard */
+.school-card {
+  overflow: hidden;
+  #schl-chart1, #schl-chart2, #schl-chart3, #schl-chart4 {
+    position: absolute;
+    inset-inline-end: 0;
+    inset-block-end: -0.2rem;
+  }
+}
+[dir=rtl] {
+  #schl-chart1, #schl-chart2, #schl-chart3, #schl-chart4 {
+    .apexcharts-canvas {
+      transform: scaleX(-1);
+    }
+  }
+}
+/* School Dashboard */
+/* Social Media Dashboard */
+.media-upgrade-img {
+  margin-block-start: -81px;
+  margin-block-end: -.8rem;
+  margin-inline-start: -18px;
+}
+[dir="rtl"] {
+  .media-upgrade-img {
+    transform: scaleX(-1);
+  }
+}
+.media-upgrade-card {
+  z-index: 0;
+  overflow: hidden;
+  background-color: variables.$black !important;
+  &::before {
+    position: absolute;
+    content: "";
+    inset-inline-start: -6rem;
+    inset-block-start: 9rem;
+    width: 30rem;
+    height: 10rem;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-image: url(../images/media/media-68.png);
+    z-index: -1;
+    opacity: 0.2;
+    transform: rotate(38deg);
+  }
+  &:after {
+    position: absolute;
+    content: "";
+    width: 100%;
+    height: 100%;
+    background-color: rgba(var(--primary-rgb), 0.75);
+    z-index: -1;
+  }
+}
+#attendance {
+  .apexcharts-pie .apexcharts-datalabels-group text {
+    fill: variables.$default-text-color;
+  }
+}
+.social-media-cards {
+  overflow: hidden;
+  z-index: 0;
+  &:before {
+    content: "";
+    position: absolute;
+    inset-inline-end: -1rem;
+    inset-block-end: -4rem;
+    width: 100px;
+    height: 100px;
+    background-color: rgba(var(--primary-rgb), 0.05);
+    z-index: -1;
+    border-radius: 50%;
+  }
+  &:after {
+    content: "";
+    position: absolute;
+    inset-inline-end: -3rem;
+    inset-block-end: -3rem;
+    width: 100px;
+    height: 100px;
+    background-color:rgba(var(--primary-rgb), 0.05);
+    z-index: -1;
+    border-radius: 50%;
+  }
+  &.secondary {
+    &:before {
+      background-color: rgba(var(--secondary-rgb), 0.05);
+    }
+    &:after {
+      background-color:rgba(var(--secondary-rgb), 0.05);
+    }
+  }
+  &.success {
+    &:before {
+      background-color: rgba(var(--success-rgb), 0.05);
+    }
+    &:after {
+      background-color:rgba(var(--success-rgb), 0.05);
+    }
+  }
+  &.pink {
+    &:before {
+      background-color: rgba(var(--pink-rgb), 0.05);
+    }
+    &:after {
+      background-color:rgba(var(--pink-rgb), 0.05);
+    }
+  }
+}
+#media-traffic {
+  .apexcharts-pie text {
+    fill: variables.$default-text-color;
+  }
+}
+.social-traffic-list {
+  margin-bottom: 0.33rem;
+  &:last-child {
+    margin-bottom: 0;
+  }
+  &.active {
+    background-color: rgba(var(--light-rgb), 1);
+  }
+  &:hover {
+    cursor: pointer;
+  }
+}
+.media-suggestions li, .media-requests li {
+  margin-bottom: .95rem;
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+.media-posts img {
+  width: 3rem;
+  height: 2.5rem;
+  border-radius: 0.3rem;
+}
+/* Social Media Dashboard */
+/* End:: dashboard_styles */

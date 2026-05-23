@@ -1,0 +1,287 @@
+@extends('layout.base')
+
+@section('page-styles')
+@endsection
+
+@section('page-content')
+    <div class="container-fluid">
+        <div class="card">
+
+            <!-- HEADER SECTION -->
+            <div class="card-body border-bottom pb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <h4 class="fw-bold text-primary mb-1">
+                            <i class="ri-user-settings-line me-2"></i> Rate Payer - Management
+                        </h4>
+
+                        <p class="mb-0 text-muted fs-14">
+                            You are About to View Rate Payer Record from your
+                            central database repository.
+                        </p>
+                    </div>
+
+                    <a href="{{ route('owners.index') }}" class="btn btn-sm btn-primary">
+                        <i class="fa fa-arrow-left me-1"></i> Back
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+
+                    <div class="card-body">
+                        <form class="row g-3 needs-validation" method="POST" action="{{ route('owners.update', $owner) }}">
+                            @csrf
+
+                            @if (session()->has('error'))
+                                <div class="alert alert-danger alert-dismissible fade show">
+                                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor"
+                                        stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+                                        class="me-2">
+                                        <polyline points="9 11 12 14 22 4"></polyline>
+                                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                                    </svg>
+                                    <strong>{{ session('error') }}</strong>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                        aria-label="btn-close"><span><i class="fa-solid fa-xmark"></i></span>
+                                    </button>
+                                </div>
+                            @endif
+
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label">First Name</label>
+                                <input type="text" class="form-control @error('first_name') is-invalid @enderror"
+                                    name="first_name" placeholder="First Name" value="{{ $owner->fname }}" readonly>
+
+                                @error('first_name')
+                                    <span class="invalid-feedback" role="alert">
+                                        {{ $message }}
+                                    </span>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label">Last Name</label>
+                                <input type="text" class="form-control @error('last_name') is-invalid @enderror"
+                                    name="last_name" placeholder="Last Name" value="{{ $owner->lname ?? 'N/A' }}" readonly>
+
+                                @error('last_name')
+                                    <span class="invalid-feedback" role="alert">
+                                        {{ $message }}
+                                    </span>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="text" class="form-control @error('email') is-invalid @enderror"
+                                    name="email" placeholder="Email Address" value="{{ $owner->email ?? 'N/A' }}"
+                                    readonly>
+
+                                @error('email')
+                                    <span class="invalid-feedback" role="alert">
+                                        {{ $message }}
+                                    </span>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="gender" class="form-label">Gender</label>
+                                <input type="text" class="form-control @error('gender') is-invalid @enderror"
+                                    name="gender" placeholder="Gender"
+                                    value="{{ $owner->gender === 'M' ? 'Male' : 'Female' }}" readonly>
+
+                                @error('gender')
+                                    <span class="invalid-feedback" role="alert">
+                                        {{ $message }}
+                                    </span>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="dob" class="form-label">Phone No.</label>
+                                <input type="text" class="form-control @error('phone_no_primary') is-invalid @enderror"
+                                    name="phone_no_primary" placeholder="Phone Number"
+                                    value="{{ $owner->phone_no_primary ?? 'N/A' }}" readonly>
+
+                                @error('phone_no_primary')
+                                    <span class="invalid-feedback" role="alert">
+                                        {{ $message }}
+                                    </span>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="tin_no" class="form-label">TIN No.</label>
+                                <input type="text" class="form-control @error('tin_no') is-invalid @enderror"
+                                    name="tin_no" placeholder="TIN No." value="{{ $owner->tin_no ?? 'N/A' }}" readonly>
+
+                                @error('tin_no')
+                                    <span class="invalid-feedback" role="alert">
+                                        {{ $message }}
+                                    </span>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="house_no" class="form-label">House No.</label>
+                                <input type="text" class="form-control @error('house_no') is-invalid @enderror"
+                                    name="house_no" placeholder="House Number" value="{{ $owner->house_no ?? 'N/A' }}"
+                                    readonly>
+
+                                @error('house_no')
+                                    <span class="invalid-feedback" role="alert">
+                                        {{ $message }}
+                                    </span>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="residential_address" class="form-label">Residential address</label>
+                                <input type="text"
+                                    class="form-control @error('residential_address') is-invalid @enderror"
+                                    name="residential_address" placeholder="Residential Address"
+                                    value="{{ $owner->residential_address ?? 'N/A' }}" readonly>
+
+                                @error('residential_address')
+                                    <span class="invalid-feedback" role="alert">
+                                        {{ $message }}
+                                    </span>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="postal_address" class="form-label">Postal address</label>
+                                <input type="text" class="form-control @error('postal_address') is-invalid @enderror"
+                                    name="postal_address" placeholder="Postal Address"
+                                    value="{{ $owner->postal_address ?? 'N/A' }}" readonly>
+
+                                @error('postal_address')
+                                    <span class="invalid-feedback" role="alert">
+                                        {{ $message }}
+                                    </span>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="digital_address" class="form-label">Digital address</label>
+                                <input type="text" class="form-control @error('digital_address') is-invalid @enderror"
+                                    name="digital_address" placeholder="Digital Address"
+                                    value="{{ $owner->digital_address ?? 'N/A' }}" readonly>
+
+                                @error('digital_address')
+                                    <span class="invalid-feedback" role="alert">
+                                        {{ $message }}
+                                    </span>
+                                @enderror
+                            </div>
+
+                            <div class="col-sm-6 mb-3">
+                                <label for="assembly" class="form-label">Assembly</label>
+                                <input type="text" class="form-control @error('assembly_code') is-invalid @enderror"
+                                    name="assembly_code" placeholder="Assembly code"
+                                    value="{{ $owner->assembly->name ?? '' }}" readonly>
+
+                                @error('assembly_code')
+                                    <span class="invalid-feedback" role="alert">
+                                        {{ $message }}
+                                    </span>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="alert alert-primary alert-dismissible fade show">
+                                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor"
+                                        stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+                                        class="me-2">
+                                        <polyline points="9 11 12 14 22 4"></polyline>
+                                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                                    </svg>
+                                    <strong>RATE PAYER PROPERTY(s)</strong>
+                                </div>
+
+                                <div class="table-responsive" id="search-results">
+                                    <table id="file-export" class="table table-bordered text-nowrap w-100">
+                                        <thead>
+                                            <tr>
+                                                <th>S/N</th>
+                                                <th>ERMS ID</th>
+                                                <th>Account No.</th>
+                                                <th>House No.</th>
+                                                <th>Digital Address</th>
+                                                <th>Location</th>
+                                                <th>Accessed?</th>
+                                                <th>Rateable Value</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($owner->properties as $index => $property)
+                                                <tr>
+                                                    <td>{{ $index + 1 }}</td>
+                                                    <td>{{ $property->erms_id ?? '' }}</td>
+                                                    <td>{{ $property->account_no ?? '' }}</td>
+                                                    <td>{{ $property->hseno ?? '' }}</td>
+                                                    <td>{{ $property->digitaladdress ?? '' }}</td>
+                                                    <td>{{ $property->location ?? '' }}</td>
+                                                    <td>{{ $property->is_rated == '1' ? 'Yes' : 'No' }}</td>
+                                                    <td>{{ $property->rateable_value ?? '0.00' }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="alert alert-success alert-dismissible fade show" style="margin-top:20px">
+                                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor"
+                                        stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
+                                        class="me-2">
+                                        <polyline points="9 11 12 14 22 4"></polyline>
+                                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                                    </svg>
+                                    <strong>RATE PAYER BUSINESS OPERATING PERMIT(s)</strong>
+                                </div>
+
+                                <div class="table-responsive" id="search-results">
+                                    <table id="file-export2" class="table table-bordered text-nowrap w-100">
+                                        <thead>
+                                            <tr>
+                                                <th>S/N</th>
+                                                <th>ERMS ID</th>
+                                                <th>Account No.</th>
+                                                <th>Business Name</th>
+                                                <th>House No.</th>
+                                                <th>Digital Address</th>
+                                                <th>Location</th>
+                                                <th>Phone No</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($owner->businesses as $index => $business)
+                                                <tr>
+                                                    <td>{{ $index + 1 }}</td>
+                                                    <td>{{ $business->erms_id ?? '' }}</td>
+                                                    <td>{{ $business->account_no ?? '' }}</td>
+                                                    <td>{{ $business->business_name ?? 'N/A' }}</td>
+                                                    <td>{{ $business->hseno ?? 'N/A' }}</td>
+                                                    <td>{{ $business->digitaladdress ?? 'N/A' }}</td>
+                                                    <td>{{ $business->location ?? 'N/A' }}</td>
+                                                    <td>{{ $business->phone_no ?? 'No' }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@section('page-scripts')
+@endsection
