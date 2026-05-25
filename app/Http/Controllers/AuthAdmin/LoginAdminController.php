@@ -11,6 +11,7 @@ use App\Jobs\OTP\SendPasswordChangeOTPSMS;
 use App\Models\CustomerType;
 use App\Models\OTP;
 use App\Models\User;
+use App\Support\OlivesCardNumber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -38,49 +39,33 @@ class LoginAdminController extends Controller
     public function login(LoginAdminRequest $request)
     {
         $data = $request->validated();
+        $identifier = trim($data['username']);
+        $normalizedCardNumber = OlivesCardNumber::normalize($identifier);
 
-        if (stripos($data['username'], 'ERMS') === 0 && strpos($data['username'], '@') === false) {
-            $data['username'] .= '@erms.com';
+        $user = User::query()
+            ->where('status', 'Active')
+            ->where(function ($query) use ($identifier, $normalizedCardNumber) {
+                $query->where('phone', $identifier)
+                    ->orWhere('email', $identifier)
+                    ->orWhere('erms_id', $identifier)
+                    ->orWhere('olives_card_number', $normalizedCardNumber);
+            })
+            ->first();
+
+        if (! $user || ! Hash::check($data['password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'username' => 'Your provided credentials could not be verified.',
+            ]);
         }
 
-        $result = filter_var($data['username'], FILTER_VALIDATE_EMAIL);
-
-        if (stripos($data['username'], 'ERMS') === 0 && strpos($data['username'], '@erms.com') !== false) {
-            $data['username'] = str_replace('@erms.com', '', $data['username']);
-        }
-
-        if (empty($result)) {
-            if (! auth()->attempt([
-                'phone' => $data['username'],
-                'password' => $data['password'],
-                'status' => 'Active',
-            ])) {
-                throw ValidationException::withMessages([
-                    'username' => 'Your provided credentials could not be verified.',
-                ]);
-            }
-        }
-
-        if (! empty($result)) {
-            if (! auth()->attempt([
-                'email' => $data['username'],
-                'password' => $data['password'],
-                'status' => 'Active',
-            ])) {
-                throw ValidationException::withMessages([
-                    'username' => 'Your provided credentials could not be verified.',
-                ]);
-            }
-        }
-
-        $user = auth()->user();
+        Auth::login($user);
 
         session()->regenerate();
         if (Hash::check(config('erms.default_password'), $user->password)) {
             return redirect()->route('auth.change');
-        } else {
-            return redirect()->route('dashboard.operational');
         }
+
+        return redirect()->route('dashboard.entry');
     }
 
     public function logout(Request $request)

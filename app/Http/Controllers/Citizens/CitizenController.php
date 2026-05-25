@@ -23,16 +23,21 @@ use App\Models\CustomerType;
 use App\Models\Division;
 use App\Models\NewsletterSubscription;
 use App\Models\OTP;
+use App\Models\Owner;
 use App\Models\Payment;
 use App\Models\Property;
+use App\Models\RevenueStream;
 use App\Models\Role;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Models\Zone;
+use App\Support\OlivesAccountTier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
+use Mpdf\Mpdf;
 
 class CitizenController extends Controller
 {
@@ -251,12 +256,22 @@ class CitizenController extends Controller
             $data['password'] = $data['org_password'];
         }
 
+        $requestedPlan = $request->input('account_plan', 'account');
+        $accessLevel = match ($requestedPlan) {
+            'subscriber' => 'Subscriber',
+            'pro' => 'Olives_Pro_Applicant',
+            'sky' => 'Olives_Sky_Applicant',
+            'cloud' => 'Olives_Cloud_Applicant',
+            'shell' => 'Olives_Shell_Applicant',
+            default => 'customer',
+        };
+
         $userLoginData = [
             'name' => $data['first_name'].' '.$data['last_name'],
             'email' => $data['email'] ?? $data['account_number'],
             'phone' => $data['telephone_number'],
             'password' => Hash::make($data['password']),
-            'access_level' => 'customer',
+            'access_level' => $accessLevel,
             'status' => 'Active',
         ];
 
@@ -299,7 +314,7 @@ class CitizenController extends Controller
         dispatch(new SendRegistrationReminder($customer));
         // dispatch(new SendOTPSMS($customer))->delay(now()->addSeconds(5));
 
-        return redirect()->route('auth.index')->with('status', 'Rate payer created successfully, kindly login with your phone number and password.');
+        return redirect()->route('auth.index')->with('status', 'Account created successfully. You can sign in with your email, phone number, or Olives account card.');
         //        } catch (\Exception $ex) {
         //            return $ex->getMessage();
         //        }
@@ -442,24 +457,279 @@ class CitizenController extends Controller
         return redirect()->route('citizens.index')->with('success', 'Citizen deleted successfully!');
     }
 
-    public function viewBill(Bill $bill)
+    public function viewBill(Request $request, Bill $bill)
     {
+        $this->authorizeCustomerRecord($request, $bill);
+
+        if ($this->usesOlivesAccountLayout($request)) {
+            $bill->loadMissing([
+                'assembly',
+                'property.assembly',
+                'property.customer',
+                'business.assembly',
+                'business.customer',
+                'successfulPayments',
+                'payments',
+            ]);
+
+            return view('dashboard.tiers.account.bill-show', compact('bill'));
+        }
+
         return view('dashboard.index-bill', compact('bill'));
     }
 
-    public function viewProperty(Property $property)
+    public function viewProperty(Request $request, Property $property)
     {
+        $this->authorizeCustomerRecord($request, $property);
+
+        if ($this->usesOlivesAccountLayout($request)) {
+            $property->loadMissing([
+                'assembly',
+                'customer',
+                'entityType',
+                'revenueStream',
+                'zone',
+                'propertyUse',
+                'division',
+                'block',
+            ]);
+
+            $propertyBills = Bill::with(['assembly', 'successfulPayments'])
+                ->where('property_id', $property->uuid)
+                ->latest()
+                ->get();
+
+            return view('dashboard.tiers.account.property-show', compact('property', 'propertyBills'));
+        }
+
         return view('dashboard.index-property', compact('property'));
     }
 
-    public function viewBusiness(Business $business)
+    public function viewBusiness(Request $request, Business $business)
     {
+        $this->authorizeCustomerRecord($request, $business);
+
+        if ($this->usesOlivesAccountLayout($request)) {
+            $business->loadMissing([
+                'assembly',
+                'customer',
+                'businessType',
+                'businessClass',
+                'revenueStream',
+                'zone',
+                'propertyUse',
+                'division',
+                'block',
+            ]);
+
+            $businessBills = Bill::with(['assembly', 'successfulPayments'])
+                ->where('business_id', $business->uuid)
+                ->latest()
+                ->get();
+
+            return view('dashboard.tiers.account.business-show', compact('business', 'businessBills'));
+        }
+
         return view('dashboard.index-business', compact('business'));
     }
 
-    public function viewPayment(Payment $payment)
+    public function viewPayment(Request $request, Payment $payment)
     {
+        $this->authorizeCustomerRecord($request, $payment);
+
+        if ($this->usesOlivesAccountLayout($request)) {
+            $payment->loadMissing([
+                'assembly',
+                'bill.assembly',
+                'bill.property.assembly',
+                'bill.property.customer',
+                'bill.business.assembly',
+                'bill.business.customer',
+            ]);
+
+            return view('dashboard.tiers.account.payment-show', compact('payment'));
+        }
+
         return view('dashboard.index-payment', compact('payment'));
+    }
+
+    public function viewBillInvoice(Request $request, Bill $bill)
+    {
+        $this->authorizeCustomerRecord($request, $bill);
+        $this->prepareBillReceipt($bill);
+
+        return view('dashboard.tiers.account.documents.bill-invoice-page', compact('bill'));
+    }
+
+    public function downloadBillInvoice(Request $request, Bill $bill)
+    {
+        $this->authorizeCustomerRecord($request, $bill);
+        $this->prepareBillReceipt($bill);
+
+        $html = view('dashboard.tiers.account.documents.bill-invoice', compact('bill'))->render();
+        $mpdf = new Mpdf(['format' => 'A5-L']);
+        $mpdf->WriteHTML($html);
+
+        return response($mpdf->Output('', 'S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="bill-'.$bill->bills_id.'.pdf"',
+        ]);
+    }
+
+    public function viewPaymentReceipt(Request $request, Payment $payment)
+    {
+        $this->authorizeCustomerRecord($request, $payment);
+        $payment->loadMissing([
+            'assembly',
+            'bill.assembly',
+            'bill.property.assembly',
+            'bill.property.customer',
+            'bill.business.assembly',
+            'bill.business.customer',
+        ]);
+
+        return view('dashboard.tiers.account.documents.payment-receipt-page', compact('payment'));
+    }
+
+    public function downloadPaymentReceipt(Request $request, Payment $payment)
+    {
+        $this->authorizeCustomerRecord($request, $payment);
+        $payment->loadMissing([
+            'assembly',
+            'bill.assembly',
+            'bill.property.assembly',
+            'bill.property.customer',
+            'bill.business.assembly',
+            'bill.business.customer',
+        ]);
+
+        $html = view('dashboard.tiers.account.documents.payment-receipt', compact('payment'))->render();
+        $mpdf = new Mpdf(['format' => 'A4']);
+        $mpdf->WriteHTML($html);
+        $reference = $payment->transaction_id ?: ($payment->req_transaction_id ?: $payment->uuid);
+
+        return response($mpdf->Output('', 'S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="payment-receipt-'.$reference.'.pdf"',
+        ]);
+    }
+
+    private function authorizeCustomerRecord(Request $request, Bill|Property|Business|Payment $record): void
+    {
+        if (! $this->usesOlivesAccountLayout($request)) {
+            return;
+        }
+
+        $citizen = Citizen::where('user_id', $request->user()->id)->first();
+        $owner = Schema::hasColumn('entity_owners', 'user_id')
+            ? Owner::where('user_id', $request->user()->id)->first()
+            : null;
+        $owner = $owner ?: $request->user()->customer;
+        $ownerId = $owner?->erms_id ?: $request->user()->erms_id;
+
+        if (! $this->recordBelongsToCustomer($record, $citizen, $ownerId)) {
+            abort(403, 'This record is not linked to your account.');
+        }
+    }
+
+    private function isOlivesAccountHolder(User $user): bool
+    {
+        return $user->access_level === 'customer'
+            || OlivesAccountTier::fromUser($user) === OlivesAccountTier::ACCOUNT;
+    }
+
+    private function usesOlivesAccountLayout(Request $request): bool
+    {
+        return $this->isOlivesAccountHolder($request->user())
+            || str_starts_with((string) $request->route()?->getName(), 'dashboard.olives-account.');
+    }
+
+    private function prepareBillReceipt(Bill $bill): void
+    {
+        $bill->loadMissing([
+            'assembly',
+            'property.customer',
+            'property.propertyUse',
+            'property.zone',
+            'business.customer',
+            'business.propertyUse',
+            'business.zone',
+        ]);
+
+        if ($bill->property && $bill->property->customer) {
+            $rateImposed = RevenueStream::where('id', $bill->property->prop_rev_id)
+                ->where('assembly_code', $bill->property->assembly_code)
+                ->first();
+        } elseif ($bill->business && $bill->business->customer) {
+            $rateImposed = RevenueStream::where('id', $bill->business->buss_rev_id)
+                ->where('assembly_code', $bill->business->assembly_code)
+                ->first();
+        }
+
+        $bill->rate_imposed = isset($rateImposed) ? ($rateImposed->rate_impost ?? $rateImposed->flat_rate) : 0;
+    }
+
+    private function recordBelongsToCustomer(Bill|Property|Business|Payment $record, ?Citizen $citizen, ?string $ownerId): bool
+    {
+        if ($record instanceof Property) {
+            return ($ownerId && Schema::hasColumn('properties', 'owner_id') && (string) $record->owner_id === (string) $ownerId)
+                || ($citizen && Schema::hasColumn('properties', 'customer_name') && (string) $record->customer_name === (string) $citizen->id);
+        }
+
+        if ($record instanceof Business) {
+            return ($ownerId && Schema::hasColumn('businesses', 'owner_id') && (string) $record->owner_id === (string) $ownerId)
+                || ($citizen && Schema::hasColumn('businesses', 'citizen_account_number') && (string) $record->citizen_account_number === (string) $citizen->id);
+        }
+
+        if ($record instanceof Bill) {
+            $propertyMatches = $record->property_id && Property::whereUuidOrId($record->property_id)
+                ->where(function ($query) use ($citizen, $ownerId) {
+                    $hasCondition = false;
+
+                    if ($ownerId && Schema::hasColumn('properties', 'owner_id')) {
+                        $query->where('owner_id', $ownerId);
+                        $hasCondition = true;
+                    }
+
+                    if ($citizen && Schema::hasColumn('properties', 'customer_name')) {
+                        $method = $hasCondition ? 'orWhere' : 'where';
+                        $query->{$method}('customer_name', $citizen->id);
+                        $hasCondition = true;
+                    }
+
+                    if (! $hasCondition) {
+                        $query->whereRaw('1 = 0');
+                    }
+                })
+                ->exists();
+
+            $businessMatches = $record->business_id && Business::whereUuidOrId($record->business_id)
+                ->where(function ($query) use ($citizen, $ownerId) {
+                    $hasCondition = false;
+
+                    if ($ownerId && Schema::hasColumn('businesses', 'owner_id')) {
+                        $query->where('owner_id', $ownerId);
+                        $hasCondition = true;
+                    }
+
+                    if ($citizen && Schema::hasColumn('businesses', 'citizen_account_number')) {
+                        $method = $hasCondition ? 'orWhere' : 'where';
+                        $query->{$method}('citizen_account_number', $citizen->id);
+                        $hasCondition = true;
+                    }
+
+                    if (! $hasCondition) {
+                        $query->whereRaw('1 = 0');
+                    }
+                })
+                ->exists();
+
+            return $propertyMatches || $businessMatches;
+        }
+
+        return Bill::where('bills_id', $record->bills_id)
+            ->get()
+            ->contains(fn (Bill $bill) => $this->recordBelongsToCustomer($bill, $citizen, $ownerId));
     }
 
     public function import()

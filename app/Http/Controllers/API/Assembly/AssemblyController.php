@@ -19,9 +19,9 @@ class AssemblyController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($uuid)
     {
-        $assembly = Assembly::where('id', $id)
+        $assembly = Assembly::whereUuidOrId($uuid)
             ->with(['region'])
             ->first();
 

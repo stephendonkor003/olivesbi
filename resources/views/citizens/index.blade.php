@@ -268,10 +268,10 @@
                                                     <div class="dropdown-menu dropdown-menu-end">
                                                         <div class="py-2">
                                                             <a class="dropdown-item"
-                                                                href="{{ route('citizens.show', $citizen->id) }}">View
+                                                                href="{{ route('citizens.show', $citizen) }}">View
                                                                 Rate Payer Record</a>
                                                             <a class="dropdown-item"
-                                                                href="{{ route('citizens.edit', $citizen->id) }}">Edit
+                                                                href="{{ route('citizens.edit', $citizen) }}">Edit
                                                                 Rate Payer Record</a>
                                                         </div>
                                                     </div>

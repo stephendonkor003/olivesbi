@@ -23,9 +23,9 @@ class BlockController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($uuid)
     {
-        $block = Block::where('id', $id)
+        $block = Block::whereUuidOrId($uuid)
             ->with(['assembly', 'division'])
             ->first();
 

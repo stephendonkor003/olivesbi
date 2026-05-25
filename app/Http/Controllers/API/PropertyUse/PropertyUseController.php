@@ -4,18 +4,21 @@ namespace App\Http\Controllers\API\PropertyUse;
 
 use App\Http\Controllers\Controller;
 use App\Models\PropertyUser;
+use App\Models\Zone;
 use Illuminate\Http\Request;
 
 class PropertyUseController extends Controller
 {
-    public function index(Request $request, $zone_id)
+    public function index(Request $request, $zone)
     {
+        $zone = Zone::whereUuidOrId($zone)->firstOrFail();
+
         $data = PropertyUser::orderBy('created_at', 'DESC')
             ->when(! empty($request->user()->assembly_code), function ($query) use ($request) {
                 $query->where('assembly_code', $request->user()->assembly_code);
             })
             ->with(['zone'])
-            ->where('zone_id', $zone_id)
+            ->where('zone_id', $zone->id)
             ->get();
 
         return response()->json([
@@ -24,9 +27,9 @@ class PropertyUseController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($uuid)
     {
-        $propertyUse = PropertyUser::where('id', $id)
+        $propertyUse = PropertyUser::whereUuidOrId($uuid)
             ->with(['zone'])
             ->first();
 

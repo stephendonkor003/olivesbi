@@ -125,7 +125,7 @@
             <div class="card">
 
                 <div class="card-body">
-                    <form class="row g-3 needs-validation" method="POST" action="{{ route('users.update', $user->id) }}">
+                    <form class="row g-3 needs-validation" method="POST" action="{{ route('users.update', $user) }}">
                         @csrf
                         @method('PUT')
 

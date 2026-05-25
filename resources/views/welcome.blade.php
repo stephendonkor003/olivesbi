@@ -627,6 +627,320 @@
             .hero-title { font-size: 2rem; }
         }
 
+        /* ── ACCOUNT TIERS — REALISTIC FLIP CARDS ── */
+        .tiers-section {
+            padding: 6rem 0;
+            background: #05100a;
+            position: relative; overflow: hidden;
+        }
+        .tiers-section::before {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 700px 500px at 10% 70%, rgba(76,199,106,.07), transparent),
+                radial-gradient(ellipse 600px 400px at 90% 25%, rgba(45,158,75,.06), transparent);
+        }
+        .tiers-section .section-label { background: rgba(76,199,106,.13); color: #a8e6bc; }
+        .tiers-section .section-title  { color: #fff; }
+        .tiers-section .section-subtitle { color: rgba(255,255,255,.5); }
+
+        /* ── FLIP MECHANISM ── */
+        .flip-card {
+            perspective: 1200px;
+            height: 320px;
+            cursor: pointer;
+            outline: none;
+        }
+        .flip-card-inner {
+            position: relative; width: 100%; height: 100%;
+            transform-style: preserve-3d;
+            transition: transform .72s cubic-bezier(.23,1,.32,1);
+            filter: drop-shadow(0 28px 45px rgba(0,0,0,.6));
+        }
+        .flip-card:hover .flip-card-inner,
+        .flip-card:focus-visible .flip-card-inner,
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+        .flip-card:hover { filter: none; }
+        .flip-card:hover .flip-card-inner,
+        .flip-card:focus-visible .flip-card-inner {
+            filter: drop-shadow(0 36px 55px rgba(0,0,0,.5));
+        }
+
+        .card-face {
+            position: absolute; inset: 0;
+            border-radius: 18px;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,.12);
+        }
+
+        /* ════════════ FRONT ════════════ */
+        .card-front {
+            color: #fff;
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 1.2rem 1.35rem 1.1rem;
+            background: var(--card-grad, linear-gradient(135deg,#071a0d,#1a5c2a));
+        }
+
+        /* Subtle dot mesh texture */
+        .card-front::before {
+            content: ''; position: absolute; inset: 0; border-radius: 18px;
+            background-image: radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px);
+            background-size: 22px 22px; pointer-events: none; z-index: 0;
+        }
+        /* Holographic diagonal shimmer sweep */
+        .card-front::after {
+            content: ''; position: absolute; inset: 0; border-radius: 18px;
+            pointer-events: none; z-index: 1;
+            background: linear-gradient(
+                115deg,
+                transparent 0%, transparent 30%,
+                rgba(255,255,255,.04) 38%,
+                rgba(255,255,255,.10) 48%,
+                rgba(255,255,255,.04) 58%,
+                transparent 66%, transparent 100%
+            );
+            background-size: 250% 100%;
+            animation: holo-sweep 4s ease-in-out infinite;
+        }
+        @keyframes holo-sweep {
+            0%   { background-position: 210% 0; }
+            100% { background-position: -210% 0; }
+        }
+
+        /* ── Front: top row ── */
+        .cf-top {
+            display: flex; align-items: flex-start;
+            justify-content: space-between; position: relative; z-index: 2;
+        }
+        .cf-logo { display: flex; align-items: center; gap: .35rem; }
+        .cf-logo-leaf {
+            width: 25px; height: 25px; flex-shrink: 0;
+            background: linear-gradient(135deg, #4cc76a, #2d9e4b);
+            border-radius: 50% 7px 50% 7px;
+            display: grid; place-items: center; font-size: .7rem;
+            box-shadow: 0 0 12px rgba(76,199,106,.55);
+        }
+        .cf-logo-word {
+            font-family: 'Poppins', sans-serif; font-weight: 900;
+            font-size: .88rem; color: #fff; line-height: 1;
+        }
+        .cf-logo-word em { color: #4cc76a; font-style: normal; }
+
+        /* Network circles (Visa/MC style) */
+        .cf-net {
+            display: flex; align-items: center; flex-direction: column; align-items: flex-end; gap: 2px;
+        }
+        .cf-circles { display: flex; align-items: center; }
+        .cf-circle {
+            width: 24px; height: 24px; border-radius: 50%; opacity: .82;
+        }
+        .cf-circle:first-child {
+            background: rgba(255,255,255,.28);
+            margin-right: -8px; z-index: 1;
+        }
+        .cf-circle:last-child {
+            background: var(--tc, #2d9e4b); opacity: .65;
+        }
+        .cf-level {
+            font-size: .52rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: .55px; color: rgba(255,255,255,.55);
+        }
+
+        /* ── Front: chip + contactless row ── */
+        .cf-mid {
+            display: flex; align-items: center; gap: .65rem;
+            position: relative; z-index: 2;
+        }
+        .cf-chip {
+            width: 40px; height: 30px; border-radius: 6px; flex-shrink: 0;
+            background: linear-gradient(145deg, #d4af70 0%, #f5e08a 28%, #b8891a 55%, #e8c96a 80%, #d4af70 100%);
+            box-shadow: 0 2px 8px rgba(0,0,0,.45), inset 0 1px 2px rgba(255,255,255,.35);
+            position: relative; overflow: hidden;
+        }
+        .cf-chip::before {
+            content: ''; position: absolute; inset: 0;
+            background:
+                repeating-linear-gradient(90deg, rgba(0,0,0,.09) 0, rgba(0,0,0,.09) 1px, transparent 1px, transparent 9px),
+                repeating-linear-gradient(0deg,  rgba(0,0,0,.09) 0, rgba(0,0,0,.09) 1px, transparent 1px, transparent 9px);
+        }
+        .cf-chip::after {
+            content: ''; position: absolute;
+            width: 14px; height: 11px;
+            border: 1.5px solid rgba(0,0,0,.2); border-radius: 3px;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #f5e08a, #b8891a);
+        }
+        .cf-contactless { display: flex; flex-direction: column; gap: 3px; }
+        .cf-arc {
+            border-top: 1.5px solid rgba(255,255,255,.5);
+            border-left: 1.5px solid transparent;
+            border-right: 1.5px solid transparent;
+            border-radius: 50% 50% 0 0;
+        }
+
+        /* ── Front: card number ── */
+        .cf-number-row { position: relative; z-index: 2; }
+        .cf-number {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: .88rem; letter-spacing: .2em; color: rgba(255,255,255,.88);
+            font-weight: 700; word-spacing: .35em;
+            text-shadow: 0 1px 4px rgba(0,0,0,.6);
+        }
+
+        /* ── Front: bottom row ── */
+        .cf-bottom {
+            display: flex; align-items: flex-end;
+            justify-content: space-between; position: relative; z-index: 2;
+        }
+        .cf-meta-label {
+            font-size: .48rem; text-transform: uppercase;
+            letter-spacing: .5px; color: rgba(255,255,255,.38);
+            margin-bottom: .08rem;
+        }
+        .cf-holder-name {
+            font-family: 'Poppins', sans-serif; font-weight: 800;
+            font-size: .82rem; color: #fff; letter-spacing: .06em;
+            text-transform: uppercase; line-height: 1;
+        }
+        .cf-expiry {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: .78rem; color: rgba(255,255,255,.78);
+            letter-spacing: .05em; line-height: 1;
+        }
+        .cf-hint {
+            position: absolute; bottom: -1.55rem; left: 50%;
+            transform: translateX(-50%);
+            font-size: .6rem; color: rgba(255,255,255,.28);
+            white-space: nowrap; letter-spacing: .2px;
+        }
+
+        /* ════════════ BACK ════════════ */
+        .card-back {
+            transform: rotateY(180deg);
+            background:
+                radial-gradient(circle at 15% 0%, rgba(76,199,106,.14), transparent 32%),
+                linear-gradient(180deg, #ffffff 0%, #f1f8f2 100%);
+            display: flex; flex-direction: column;
+            color: #0d1a10;
+        }
+
+        /* Magnetic stripe */
+        .cb-mag {
+            display: none;
+            height: 40px; flex-shrink: 0; margin-top: 14px;
+            background: linear-gradient(180deg, #1a1a1a 0%, #111 40%, #242424 100%);
+            position: relative;
+        }
+        .cb-mag::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(180deg,
+                rgba(255,255,255,.06) 0%, rgba(255,255,255,.01) 50%, rgba(255,255,255,.06) 100%
+            );
+        }
+
+        /* Signature + CVV row */
+        .cb-sig-row {
+            display: flex; align-items: center; gap: .5rem;
+            padding: .3rem .85rem; flex-shrink: 0;
+        }
+        .card-back .cb-sig-row { display: none; }
+        .cb-sig {
+            flex: 1; height: 24px; border-radius: 3px; border: 1px solid rgba(0,0,0,.14);
+            background: repeating-linear-gradient(
+                -52deg,
+                #f0f0ff 0, #f0f0ff 3px, #e4e4f8 3px, #e4e4f8 6px
+            );
+        }
+        .cb-cvv {
+            flex-shrink: 0; width: 40px; height: 24px; border-radius: 3px;
+            border: 1px solid rgba(0,0,0,.18); background: #fff;
+            display: grid; place-items: center;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: .72rem; font-weight: 700; color: #1a1a1a; letter-spacing: .12em;
+        }
+
+        /* Benefits body */
+        .cb-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: .85rem;
+            overflow: hidden;
+            padding: 1.05rem;
+        }
+        .cb-header {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: .75rem;
+            padding: 0 0 .8rem;
+            border-bottom: 1px solid rgba(26,92,42,.14);
+            flex-shrink: 0;
+        }
+        .cb-tier-name {
+            font-family: 'Poppins', sans-serif; font-weight: 800;
+            font-size: .96rem; color: #0d1a10; letter-spacing: .01em;
+            line-height: 1.15;
+        }
+        .cb-tier-badge {
+            flex-shrink: 0;
+            font-size: .58rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: .7px; color: #fff;
+            background: var(--tc, #2d9e4b); padding: .22rem .5rem; border-radius: 999px;
+        }
+        .cb-benefits {
+            flex: 1;
+            padding: 0;
+            display: grid;
+            gap: .48rem;
+            align-content: start;
+        }
+        .cb-benefit {
+            display: flex; align-items: flex-start; gap: .5rem;
+            min-height: 40px;
+            padding: .52rem .62rem;
+            border: 1px solid rgba(26,92,42,.1);
+            border-radius: 8px;
+            background: rgba(255,255,255,.82);
+            box-shadow: 0 8px 18px rgba(8, 30, 14, .05);
+            font-size: .79rem; color: #253529; line-height: 1.32;
+        }
+        .cb-dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+            margin-top: .28rem;
+            background: var(--tc, #2d9e4b);
+            box-shadow: 0 0 5px var(--tc, #2d9e4b);
+        }
+        .cb-foot {
+            display: flex; justify-content: space-between; align-items: center;
+            gap: .75rem;
+            padding: .75rem 0 0;
+            border-top: 1px solid rgba(26,92,42,.12);
+            flex-shrink: 0;
+        }
+        .cb-brand {
+            font-family: 'Poppins', sans-serif; font-weight: 900;
+            font-size: .76rem; color: #1a5c2a;
+        }
+        .cb-brand em { color: var(--tc, #4cc76a); font-style: normal; }
+        .cb-cta {
+            display: inline-flex; align-items: center; gap: .22rem;
+            flex-shrink: 0;
+            font-size: .7rem; font-weight: 800; color: #fff;
+            background: var(--tc, #2d9e4b); padding: .34rem .65rem;
+            border-radius: 7px; text-decoration: none; transition: opacity .2s;
+        }
+        .cb-cta:hover { opacity: .85; color: #fff; text-decoration: none; }
+
+        .tiers-cta-row { margin-top: 4rem; text-align: center; }
+
+        @media (max-width: 575px) {
+            .flip-card { height: 350px; }
+            .cb-body { padding: .9rem; }
+            .cb-benefit { font-size: .75rem; min-height: 38px; }
+            .cb-foot { align-items: flex-start; flex-direction: column; }
+        }
+
         /* ── UTILITY ── */
         .green-dot {
             display: inline-block;
@@ -661,12 +975,10 @@
         <div class="collapse navbar-collapse" id="navMenu">
             <ul class="navbar-nav mx-auto gap-1">
                 <li class="nav-item"><a class="nav-link nav-link-custom" href="#features">Features</a></li>
-                <li class="nav-item"><a class="nav-link nav-link-custom" href="#coverage">Coverage</a></li>
                 <li class="nav-item"><a class="nav-link nav-link-custom" href="#how-it-works">How It Works</a></li>
-                <li class="nav-item"><a class="nav-link nav-link-custom" href="#mission">Mission</a></li>
+                <li class="nav-item"><a class="nav-link nav-link-custom" href="#who-its-for">Accounts</a></li>
                 <li class="nav-item"><a class="nav-link nav-link-custom" href="{{ route('locality.check') }}">Check Locality</a></li>
                 <li class="nav-item"><a class="nav-link nav-link-custom" href="{{ route('igf.index') }}" style="font-weight:600;">Business We Support</a></li>
-                <li class="nav-item"><a class="nav-link nav-link-custom" href="#contact">Contact</a></li>
                 <li class="nav-item">
                     <a class="nav-link nav-link-custom" href="{{ route('donation.index') }}"
                        style="color:var(--accent) !important; font-weight:700;">
@@ -1137,6 +1449,392 @@
 
 
 <!-- ═══════════════════════════════════════════
+     ACCOUNT TIERS
+═══════════════════════════════════════════ -->
+<section id="who-its-for" class="tiers-section">
+    <div class="container" style="position:relative;z-index:2;">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <span class="section-label">Who Is It For?</span>
+            <h2 class="section-title">One Platform. Six Account Tiers.</h2>
+            <p class="section-subtitle">
+                Every tier is built for a specific scale of governance. Hover or tap a card to flip it and see what each account unlocks.
+            </p>
+        </div>
+
+        <div class="row g-5">
+
+            <!-- ── SUBSCRIBER ── -->
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="0">
+                <div class="flip-card" tabindex="0" style="--tc:#4cc76a; --card-grad:linear-gradient(135deg,#041208 0%,#0d2e14 45%,#1a5c2a 80%,#2d9e4b 120%);">
+                    <div class="flip-card-inner">
+                        <div class="card-face card-front">
+                            <div class="cf-top">
+                                <div class="cf-logo"><div class="cf-logo-leaf">🌿</div><div class="cf-logo-word">Olives <em>BI</em></div></div>
+                                <div class="cf-net">
+                                    <div class="cf-circles"><div class="cf-circle"></div><div class="cf-circle"></div></div>
+                                    <div class="cf-level">Entry</div>
+                                </div>
+                            </div>
+                            <div class="cf-mid">
+                                <div class="cf-chip"></div>
+                                <div class="cf-contactless">
+                                    <div class="cf-arc" style="width:22px;height:11px;"></div>
+                                    <div class="cf-arc" style="width:15px;height:7.5px;opacity:.7;"></div>
+                                    <div class="cf-arc" style="width:8px;height:4px;opacity:.45;"></div>
+                                </div>
+                            </div>
+                            <div class="cf-number-row">
+                                <div class="cf-number">4761 &nbsp;•••• &nbsp;•••• &nbsp;0001</div>
+                            </div>
+                            <div class="cf-bottom">
+                                <div>
+                                    <div class="cf-meta-label">Account Holder</div>
+                                    <div class="cf-holder-name">Subscriber</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div class="cf-meta-label">Valid Thru</div>
+                                    <div class="cf-expiry">12/27</div>
+                                </div>
+                            </div>
+                            <div class="cf-hint">hover · tap to flip</div>
+                        </div>
+                        <div class="card-face card-back">
+                            <div class="cb-mag"></div>
+                            <div class="cb-sig-row"><div class="cb-sig"></div><div class="cb-cvv">782</div></div>
+                            <div class="cb-body">
+                                <div class="cb-header">
+                                    <div class="cb-tier-name">Subscriber</div>
+                                    <div class="cb-tier-badge">Entry Tier</div>
+                                </div>
+                                <div class="cb-benefits">
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Follow environmental news &amp; local alerts</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Research public locality intelligence freely</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Subscribe to area-specific newsletters</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Access open air, waste &amp; risk scores</div>
+                                </div>
+                                <div class="cb-foot">
+                                    <div class="cb-brand">Olives <em>BI</em></div>
+                                    <a class="cb-cta" href="{{ route('auth.register') }}">Get started <i class="bi bi-arrow-right"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── OLIVES ACCOUNT ── -->
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="flip-card" tabindex="0" style="--tc:#2d9e4b; --card-grad:linear-gradient(135deg,#041208 0%,#0b2812 42%,#1a6b30 85%,#2d9e4b 120%);">
+                    <div class="flip-card-inner">
+                        <div class="card-face card-front">
+                            <div class="cf-top">
+                                <div class="cf-logo"><div class="cf-logo-leaf">🌿</div><div class="cf-logo-word">Olives <em>BI</em></div></div>
+                                <div class="cf-net">
+                                    <div class="cf-circles"><div class="cf-circle"></div><div class="cf-circle"></div></div>
+                                    <div class="cf-level">Personal</div>
+                                </div>
+                            </div>
+                            <div class="cf-mid">
+                                <div class="cf-chip"></div>
+                                <div class="cf-contactless">
+                                    <div class="cf-arc" style="width:22px;height:11px;"></div>
+                                    <div class="cf-arc" style="width:15px;height:7.5px;opacity:.7;"></div>
+                                    <div class="cf-arc" style="width:8px;height:4px;opacity:.45;"></div>
+                                </div>
+                            </div>
+                            <div class="cf-number-row">
+                                <div class="cf-number">4761 &nbsp;•••• &nbsp;•••• &nbsp;0002</div>
+                            </div>
+                            <div class="cf-bottom">
+                                <div>
+                                    <div class="cf-meta-label">Account Holder</div>
+                                    <div class="cf-holder-name">Olives Account</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div class="cf-meta-label">Valid Thru</div>
+                                    <div class="cf-expiry">12/27</div>
+                                </div>
+                            </div>
+                            <div class="cf-hint">hover · tap to flip</div>
+                        </div>
+                        <div class="card-face card-back">
+                            <div class="cb-mag"></div>
+                            <div class="cb-sig-row"><div class="cb-sig"></div><div class="cb-cvv">315</div></div>
+                            <div class="cb-body">
+                                <div class="cb-header">
+                                    <div class="cb-tier-name">Olives Account</div>
+                                    <div class="cb-tier-badge">Personal Tier</div>
+                                </div>
+                                <div class="cb-benefits">
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Check property environmental safety scores</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Pay property rates, levies, fines &amp; penalties</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Manage business permits &amp; compliance bills</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Research hazards &amp; biodiversity near assets</div>
+                                </div>
+                                <div class="cb-foot">
+                                    <div class="cb-brand">Olives <em>BI</em></div>
+                                    <a class="cb-cta" href="{{ route('auth.register') }}">Get started <i class="bi bi-arrow-right"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── OLIVES PRO ── -->
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="flip-card" tabindex="0" style="--tc:#d4a017; --card-grad:linear-gradient(135deg,#120d00 0%,#2a1d00 42%,#7a5200 82%,#d4a017 120%);">
+                    <div class="flip-card-inner">
+                        <div class="card-face card-front">
+                            <div class="cf-top">
+                                <div class="cf-logo"><div class="cf-logo-leaf">🌿</div><div class="cf-logo-word">Olives <em>BI</em></div></div>
+                                <div class="cf-net">
+                                    <div class="cf-circles"><div class="cf-circle"></div><div class="cf-circle"></div></div>
+                                    <div class="cf-level">Municipal</div>
+                                </div>
+                            </div>
+                            <div class="cf-mid">
+                                <div class="cf-chip"></div>
+                                <div class="cf-contactless">
+                                    <div class="cf-arc" style="width:22px;height:11px;"></div>
+                                    <div class="cf-arc" style="width:15px;height:7.5px;opacity:.7;"></div>
+                                    <div class="cf-arc" style="width:8px;height:4px;opacity:.45;"></div>
+                                </div>
+                            </div>
+                            <div class="cf-number-row">
+                                <div class="cf-number">4761 &nbsp;•••• &nbsp;•••• &nbsp;0003</div>
+                            </div>
+                            <div class="cf-bottom">
+                                <div>
+                                    <div class="cf-meta-label">Account Holder</div>
+                                    <div class="cf-holder-name">Olives Pro</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div class="cf-meta-label">Valid Thru</div>
+                                    <div class="cf-expiry">12/27</div>
+                                </div>
+                            </div>
+                            <div class="cf-hint">hover · tap to flip</div>
+                        </div>
+                        <div class="card-face card-back">
+                            <div class="cb-mag"></div>
+                            <div class="cb-sig-row"><div class="cb-sig"></div><div class="cb-cvv">641</div></div>
+                            <div class="cb-body">
+                                <div class="cb-header">
+                                    <div class="cb-tier-name">Olives Pro</div>
+                                    <div class="cb-tier-badge">Municipal Tier</div>
+                                </div>
+                                <div class="cb-benefits">
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Configure by-laws, fees &amp; billing rules</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>View all properties, businesses &amp; citizens</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Track markets, schools, hospitals &amp; Ramsar sites</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Monitor revenue, arrears &amp; enforcement</div>
+                                </div>
+                                <div class="cb-foot">
+                                    <div class="cb-brand">Olives <em>BI</em></div>
+                                    <a class="cb-cta" href="{{ route('auth.register') }}">Get started <i class="bi bi-arrow-right"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── OLIVES SKY ── -->
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="0">
+                <div class="flip-card" tabindex="0" style="--tc:#1565c0; --card-grad:linear-gradient(135deg,#020a16 0%,#071e3d 42%,#0a3a8a 82%,#1565c0 120%);">
+                    <div class="flip-card-inner">
+                        <div class="card-face card-front">
+                            <div class="cf-top">
+                                <div class="cf-logo"><div class="cf-logo-leaf">🌿</div><div class="cf-logo-word">Olives <em>BI</em></div></div>
+                                <div class="cf-net">
+                                    <div class="cf-circles"><div class="cf-circle"></div><div class="cf-circle"></div></div>
+                                    <div class="cf-level">National</div>
+                                </div>
+                            </div>
+                            <div class="cf-mid">
+                                <div class="cf-chip"></div>
+                                <div class="cf-contactless">
+                                    <div class="cf-arc" style="width:22px;height:11px;"></div>
+                                    <div class="cf-arc" style="width:15px;height:7.5px;opacity:.7;"></div>
+                                    <div class="cf-arc" style="width:8px;height:4px;opacity:.45;"></div>
+                                </div>
+                            </div>
+                            <div class="cf-number-row">
+                                <div class="cf-number">4761 &nbsp;•••• &nbsp;•••• &nbsp;0004</div>
+                            </div>
+                            <div class="cf-bottom">
+                                <div>
+                                    <div class="cf-meta-label">Account Holder</div>
+                                    <div class="cf-holder-name">Olives Sky</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div class="cf-meta-label">Valid Thru</div>
+                                    <div class="cf-expiry">12/27</div>
+                                </div>
+                            </div>
+                            <div class="cf-hint">hover · tap to flip</div>
+                        </div>
+                        <div class="card-face card-back">
+                            <div class="cb-mag"></div>
+                            <div class="cb-sig-row"><div class="cb-sig"></div><div class="cb-cvv">529</div></div>
+                            <div class="cb-body">
+                                <div class="cb-header">
+                                    <div class="cb-tier-name">Olives Sky</div>
+                                    <div class="cb-tier-badge">National Tier</div>
+                                </div>
+                                <div class="cb-benefits">
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Oversee all assemblies &amp; districts nationally</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Compare regional revenue &amp; compliance data</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Track national environmental performance</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Coordinate policy standards across jurisdictions</div>
+                                </div>
+                                <div class="cb-foot">
+                                    <div class="cb-brand">Olives <em>BI</em></div>
+                                    <a class="cb-cta" href="{{ route('auth.index') }}">Sign in <i class="bi bi-arrow-right"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── OLIVES CLOUD ── -->
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="flip-card" tabindex="0" style="--tc:#7c3aed; --card-grad:linear-gradient(135deg,#080415 0%,#1a0a32 42%,#4a1a96 82%,#7c3aed 120%);">
+                    <div class="flip-card-inner">
+                        <div class="card-face card-front">
+                            <div class="cf-top">
+                                <div class="cf-logo"><div class="cf-logo-leaf">🌿</div><div class="cf-logo-word">Olives <em>BI</em></div></div>
+                                <div class="cf-net">
+                                    <div class="cf-circles"><div class="cf-circle"></div><div class="cf-circle"></div></div>
+                                    <div class="cf-level">Regional</div>
+                                </div>
+                            </div>
+                            <div class="cf-mid">
+                                <div class="cf-chip"></div>
+                                <div class="cf-contactless">
+                                    <div class="cf-arc" style="width:22px;height:11px;"></div>
+                                    <div class="cf-arc" style="width:15px;height:7.5px;opacity:.7;"></div>
+                                    <div class="cf-arc" style="width:8px;height:4px;opacity:.45;"></div>
+                                </div>
+                            </div>
+                            <div class="cf-number-row">
+                                <div class="cf-number">4761 &nbsp;•••• &nbsp;•••• &nbsp;0005</div>
+                            </div>
+                            <div class="cf-bottom">
+                                <div>
+                                    <div class="cf-meta-label">Account Holder</div>
+                                    <div class="cf-holder-name">Olives Cloud</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div class="cf-meta-label">Valid Thru</div>
+                                    <div class="cf-expiry">12/27</div>
+                                </div>
+                            </div>
+                            <div class="cf-hint">hover · tap to flip</div>
+                        </div>
+                        <div class="card-face card-back">
+                            <div class="cb-mag"></div>
+                            <div class="cb-sig-row"><div class="cb-sig"></div><div class="cb-cvv">873</div></div>
+                            <div class="cb-body">
+                                <div class="cb-header">
+                                    <div class="cb-tier-name">Olives Cloud</div>
+                                    <div class="cb-tier-badge">Regional Tier</div>
+                                </div>
+                                <div class="cb-benefits">
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Manage all member countries &amp; operations</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Compare cross-border environmental signals</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Benchmark assembly outcomes across countries</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Produce intergovernmental regional reports</div>
+                                </div>
+                                <div class="cb-foot">
+                                    <div class="cb-brand">Olives <em>BI</em></div>
+                                    <a class="cb-cta" href="{{ route('auth.index') }}">Sign in <i class="bi bi-arrow-right"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── OLIVES SHELL ── -->
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="flip-card" tabindex="0" style="--tc:#0f766e; --card-grad:linear-gradient(135deg,#021210 0%,#082820 42%,#0a4840 82%,#0f766e 120%);">
+                    <div class="flip-card-inner">
+                        <div class="card-face card-front">
+                            <div class="cf-top">
+                                <div class="cf-logo"><div class="cf-logo-leaf">🌿</div><div class="cf-logo-word">Olives <em>BI</em></div></div>
+                                <div class="cf-net">
+                                    <div class="cf-circles"><div class="cf-circle"></div><div class="cf-circle"></div></div>
+                                    <div class="cf-level">Continental</div>
+                                </div>
+                            </div>
+                            <div class="cf-mid">
+                                <div class="cf-chip"></div>
+                                <div class="cf-contactless">
+                                    <div class="cf-arc" style="width:22px;height:11px;"></div>
+                                    <div class="cf-arc" style="width:15px;height:7.5px;opacity:.7;"></div>
+                                    <div class="cf-arc" style="width:8px;height:4px;opacity:.45;"></div>
+                                </div>
+                            </div>
+                            <div class="cf-number-row">
+                                <div class="cf-number">4761 &nbsp;•••• &nbsp;•••• &nbsp;0006</div>
+                            </div>
+                            <div class="cf-bottom">
+                                <div>
+                                    <div class="cf-meta-label">Account Holder</div>
+                                    <div class="cf-holder-name">Olives Shell</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div class="cf-meta-label">Valid Thru</div>
+                                    <div class="cf-expiry">12/27</div>
+                                </div>
+                            </div>
+                            <div class="cf-hint">hover · tap to flip</div>
+                        </div>
+                        <div class="card-face card-back">
+                            <div class="cb-mag"></div>
+                            <div class="cb-sig-row"><div class="cb-sig"></div><div class="cb-cvv">094</div></div>
+                            <div class="cb-body">
+                                <div class="cb-header">
+                                    <div class="cb-tier-name">Olives Shell</div>
+                                    <div class="cb-tier-badge">Continental Tier</div>
+                                </div>
+                                <div class="cb-benefits">
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Govern entire continental organizations (AU/EU)</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Monitor union-wide policy &amp; compliance</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Unify federated data across all member states</div>
+                                    <div class="cb-benefit"><div class="cb-dot"></div>Produce intergovernmental intelligence reports</div>
+                                </div>
+                                <div class="cb-foot">
+                                    <div class="cb-brand">Olives <em>BI</em></div>
+                                    <a class="cb-cta" href="{{ route('auth.index') }}">Sign in <i class="bi bi-arrow-right"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="tiers-cta-row" data-aos="fade-up">
+            <p style="color:rgba(255,255,255,.45); font-size:.92rem; margin-bottom:1.5rem;">
+                Not sure which tier fits you? Start with a free Subscriber account — upgrade anytime.
+            </p>
+            <a href="{{ route('auth.register') }}" class="btn btn-hero-primary me-3">
+                <i class="bi bi-person-plus me-2"></i>Create Free Account
+            </a>
+            <a href="{{ route('auth.index') }}" class="btn" style="border:1.5px solid rgba(255,255,255,.28); color:#fff; padding:.75rem 1.75rem; border-radius:10px; font-weight:700; transition:all .25s;">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+            </a>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════
      MISSION CALLOUT
 ═══════════════════════════════════════════ -->
 <section id="mission" class="mission-section">
@@ -1253,6 +1951,7 @@
                 <a href="#features" class="footer-link">Features</a>
                 <a href="#coverage" class="footer-link">Coverage</a>
                 <a href="#how-it-works" class="footer-link">How It Works</a>
+                <a href="#who-its-for" class="footer-link">Account Tiers</a>
                 <a href="#mission" class="footer-link">Mission</a>
             </div>
             <div class="col-6 col-md-4 col-lg-3">
@@ -1389,6 +2088,19 @@
     }
 
     new HeroSlider();
+
+    // ── Flip cards: tap to toggle on touch devices
+    document.querySelectorAll('.flip-card').forEach(card => {
+        card.addEventListener('click', () => {
+            card.classList.toggle('flipped');
+        });
+        card.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                card.classList.toggle('flipped');
+            }
+        });
+    });
 </script>
 </body>
 </html>

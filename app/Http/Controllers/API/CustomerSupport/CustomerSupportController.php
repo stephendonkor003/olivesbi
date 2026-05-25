@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\API\CustomerSupport\CreateCustomerSupportRequest;
 use App\Http\Requests\API\CustomerSupport\UpdateCustomerSupportRequest;
 use App\Models\CustomerSupport;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class CustomerSupportController extends Controller
@@ -40,9 +41,9 @@ class CustomerSupportController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($uuid)
     {
-        $customerSupport = CustomerSupport::where('id', $id)
+        $customerSupport = CustomerSupport::whereUuidOrId($uuid)
             ->with(['user', 'assembly', 'responseBy'])
             ->first();
 
@@ -58,10 +59,17 @@ class CustomerSupportController extends Controller
         ]);
     }
 
-    public function userShow($id)
+    public function userShow($uuid)
     {
-        $customerSupport = CustomerSupport::where('user_id', $id)
-            ->orWhere('created_by', $id)
+        $user = User::whereUuidOrId($uuid)->first();
+
+        $customerSupport = CustomerSupport::query()
+            ->when($user, function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhere('created_by', $user->id);
+            }, function ($query) use ($uuid) {
+                $query->whereUuidOrId($uuid);
+            })
             ->with(['user', 'assembly', 'responseBy'])
             ->get();
 
@@ -71,9 +79,9 @@ class CustomerSupportController extends Controller
         ]);
     }
 
-    public function update(UpdateCustomerSupportRequest $request, $id)
+    public function update(UpdateCustomerSupportRequest $request, $uuid)
     {
-        $customerSupport = CustomerSupport::where('id', $id)
+        $customerSupport = CustomerSupport::whereUuidOrId($uuid)
             ->with(['user', 'assembly', 'responseBy'])
             ->first();
 

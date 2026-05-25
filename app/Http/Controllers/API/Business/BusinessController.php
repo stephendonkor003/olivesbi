@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\Business;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\Citizen;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class BusinessController extends Controller
@@ -32,9 +33,9 @@ class BusinessController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($uuid)
     {
-        $business = Business::where('id', $id)
+        $business = Business::whereUuidOrId($uuid)
             ->with([
                 'customer',
                 'businessClass',
@@ -58,10 +59,18 @@ class BusinessController extends Controller
         ]);
     }
 
-    public function customerBusiness($id)
+    public function customerBusiness($uuid)
     {
-        $customer = Citizen::where('user_id', $id)
-            ->orWhere('id', $id)
+        $user = User::whereUuidOrId($uuid)->first();
+
+        $customer = Citizen::query()
+            ->where(function ($query) use ($uuid, $user) {
+                $query->whereUuidOrId($uuid);
+
+                if ($user) {
+                    $query->orWhere('user_id', $user->id);
+                }
+            })
             ->first();
 
         if (empty($customer)) {

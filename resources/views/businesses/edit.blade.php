@@ -106,6 +106,8 @@
                                     placeholder="Digital Address" value="{{ $business->digital_address }}">
                             </div>
 
+                            @include('shared.global-location-fields', ['record' => $business])
+
                             <div class="col-sm-6 mb-3">
                                 <label for="house_number" class="form-label">House Number</label>
                                 <input type="text" class="form-control" name="house_number" placeholder="House Number"

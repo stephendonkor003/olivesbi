@@ -148,10 +148,10 @@
                                                     <div class="dropdown-menu dropdown-menu-end">
                                                         <div class="py-2">
                                                             <a class="dropdown-item"
-                                                                href=" {{ route('customer-types.show', $customerType->id) }}">View
+                                                                href=" {{ route('customer-types.show', $customerType) }}">View
                                                             </a>
                                                             <a class="dropdown-item"
-                                                                href=" {{ route('customer-types.edit', $customerType->id) }}">Edit
+                                                                href=" {{ route('customer-types.edit', $customerType) }}">Edit
                                                             </a>
                                                         </div>
                                                     </div>

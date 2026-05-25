@@ -39,6 +39,9 @@ CREATE TABLE "assemblies" (
   "logo" varchar(255) DEFAULT NULL,
   "invoice_layout" varchar(255) DEFAULT NULL,
   "assembly_category" varchar(255) DEFAULT NULL,
+  "currency_code" varchar(3) NOT NULL DEFAULT 'GHS',
+  "currency_symbol" varchar(12) NOT NULL DEFAULT 'GHS',
+  "currency_name" varchar(255) NOT NULL DEFAULT 'Ghanaian Cedi',
   "bank_name" varchar(255) DEFAULT NULL,
   "bank_number" varchar(255) DEFAULT NULL,
   "bank_branch" varchar(255) DEFAULT NULL,
@@ -46,6 +49,43 @@ CREATE TABLE "assemblies" (
   "updated_at" timestamp(0) without time zone NULL DEFAULT NULL,
   PRIMARY KEY ("id")
 );
+
+DROP TABLE IF EXISTS "account_property_requests" CASCADE;
+CREATE TABLE "account_property_requests" (
+  "id" bigserial NOT NULL,
+  "tracking_code" varchar(255) NOT NULL,
+  "user_id" bigint NOT NULL,
+  "citizen_id" bigint DEFAULT NULL,
+  "owner_id" varchar(255) DEFAULT NULL,
+  "assembly_code" varchar(255) DEFAULT NULL,
+  "status" varchar(255) NOT NULL DEFAULT 'pending',
+  "source" varchar(255) NOT NULL DEFAULT 'openstreetmap',
+  "parcel_name" varchar(255) DEFAULT NULL,
+  "display_name" text DEFAULT NULL,
+  "address_line" varchar(255) DEFAULT NULL,
+  "latitude" decimal(10,8) DEFAULT NULL,
+  "longitude" decimal(11,8) DEFAULT NULL,
+  "osm_type" varchar(255) DEFAULT NULL,
+  "osm_id" varchar(255) DEFAULT NULL,
+  "osm_place_id" varchar(255) DEFAULT NULL,
+  "osm_class" varchar(255) DEFAULT NULL,
+  "osm_category" varchar(255) DEFAULT NULL,
+  "parcel_geojson" json DEFAULT NULL,
+  "notes" text DEFAULT NULL,
+  "reviewed_by" bigint DEFAULT NULL,
+  "reviewed_at" timestamp(0) without time zone NULL DEFAULT NULL,
+  "created_at" timestamp(0) without time zone NULL DEFAULT NULL,
+  "updated_at" timestamp(0) without time zone NULL DEFAULT NULL,
+  PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX "account_property_requests_tracking_code_unique" ON "account_property_requests" ("tracking_code");
+CREATE INDEX "account_property_requests_user_id_index" ON "account_property_requests" ("user_id");
+CREATE INDEX "account_property_requests_citizen_id_index" ON "account_property_requests" ("citizen_id");
+CREATE INDEX "account_property_requests_owner_id_index" ON "account_property_requests" ("owner_id");
+CREATE INDEX "account_property_requests_assembly_code_index" ON "account_property_requests" ("assembly_code");
+CREATE INDEX "account_property_requests_status_index" ON "account_property_requests" ("status");
+CREATE INDEX "account_property_requests_reviewed_by_index" ON "account_property_requests" ("reviewed_by");
 
 DROP TABLE IF EXISTS "audit_trails" CASCADE;
 CREATE TABLE "audit_trails" (
@@ -522,6 +562,23 @@ CREATE TABLE "model_has_roles" (
   PRIMARY KEY ("role_id","model_id","model_type")
 );
 
+DROP TABLE IF EXISTS "newsletter_subscriptions" CASCADE;
+CREATE TABLE "newsletter_subscriptions" (
+  "id" bigserial NOT NULL,
+  "email" varchar(255) NOT NULL,
+  "name" varchar(255) DEFAULT NULL,
+  "phone" varchar(255) DEFAULT NULL,
+  "audience_type" varchar(255) DEFAULT NULL,
+  "topics" json DEFAULT NULL,
+  "source" varchar(255) NOT NULL DEFAULT 'registration',
+  "subscribed_at" timestamp(0) without time zone NULL DEFAULT NULL,
+  "created_at" timestamp(0) without time zone NULL DEFAULT NULL,
+  "updated_at" timestamp(0) without time zone NULL DEFAULT NULL,
+  PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX "newsletter_subscriptions_email_unique" ON "newsletter_subscriptions" ("email");
+
 DROP TABLE IF EXISTS "otps" CASCADE;
 CREATE TABLE "otps" (
   "id" bigserial NOT NULL,
@@ -889,6 +946,7 @@ CREATE TABLE "users" (
   "assembly_code" varchar(255) DEFAULT NULL,
   "division_code" varchar(255) DEFAULT NULL,
   "erms_id" varchar(255) DEFAULT NULL,
+  "olives_card_number" varchar(255) DEFAULT NULL,
   "created_by" varchar(255) DEFAULT NULL,
   "created_at" timestamp(0) without time zone NULL DEFAULT NULL,
   "updated_at" timestamp(0) without time zone NULL DEFAULT NULL,
@@ -983,6 +1041,7 @@ CREATE INDEX "sessions_user_id_index" ON "sessions" ("user_id");
 CREATE INDEX "sessions_last_activity_index" ON "sessions" ("last_activity");
 CREATE UNIQUE INDEX "users_email_unique" ON "users" ("email");
 CREATE UNIQUE INDEX "users_phone_unique" ON "users" ("phone");
+CREATE UNIQUE INDEX "users_olives_card_number_unique" ON "users" ("olives_card_number");
 
 -- Foreign keys
 ALTER TABLE "model_has_permissions" ADD CONSTRAINT "model_has_permissions_permission_id_foreign" FOREIGN KEY ("permission_id") REFERENCES "permissions" ("id") ON DELETE CASCADE;
@@ -1122,6 +1181,10 @@ INSERT INTO "migrations" ("id", "migration", "batch") VALUES (237,'2025_12_07_16
 INSERT INTO "migrations" ("id", "migration", "batch") VALUES (238,'2025_12_07_163809_add_assembly_code_to_property_types',83);
 INSERT INTO "migrations" ("id", "migration", "batch") VALUES (1,'2025_12_17_061306_convert_bill_adjustments_erms_id_to_json',84);
 INSERT INTO "migrations" ("id", "migration", "batch") VALUES (2,'2026_01_08_151358_create_job_batches_table',84);
+INSERT INTO "migrations" ("id", "migration", "batch") VALUES (3,'2026_05_23_000001_create_newsletter_subscriptions_table',85);
+INSERT INTO "migrations" ("id", "migration", "batch") VALUES (4,'2026_05_23_000002_add_olives_card_number_to_users_table',86);
+INSERT INTO "migrations" ("id", "migration", "batch") VALUES (5,'2026_05_23_000003_add_currency_fields_to_assemblies_table',87);
+INSERT INTO "migrations" ("id", "migration", "batch") VALUES (6,'2026_05_23_000004_create_account_property_requests_table',87);
 SELECT setval('migrations_id_seq', (SELECT MAX("id") FROM "migrations"));
 
 

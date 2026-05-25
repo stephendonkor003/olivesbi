@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasUuid;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class Payment extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
 
     protected $fillable = [
         'bills_id',
@@ -26,6 +28,20 @@ class Payment extends Model
         'created_by',
         'authorization_url',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Payment $payment) {
+            if (empty($payment->uuid)) {
+                $payment->uuid = (string) Str::uuid();
+            }
+        });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
 
     public function bill()
     {

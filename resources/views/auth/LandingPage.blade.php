@@ -34,7 +34,6 @@
                             <li><a href="#about">About Us</a></li>
                             <li><a href="#faq">FAQs</a></li>
                             <li><a href="{{ route('locality.check') }}">Check Locality</a></li>
-                            <li><a href="#contact">Contact</a></li>
                         </ul>
                     </nav>
                 </div>
@@ -117,7 +116,6 @@
                         <li><a href="#features">Features</a></li>
                         <li><a href="#about">About Us</a></li>
                         <li><a href="{{ route('locality.check') }}">Check Locality</a></li>
-                        <li><a href="#contact">Contact</a></li>
                     </ul>
                 </nav>
                 <div class="social-wrapper-two menu mobile-menu">

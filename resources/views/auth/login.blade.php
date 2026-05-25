@@ -63,31 +63,31 @@
         }
         .panel-sub { color: rgba(255,255,255,.58); font-size: .88rem; line-height: 1.75; margin-bottom: 2.25rem; }
 
-        .panel-features { list-style: none; }
-        .panel-features li {
-            display: flex; gap: .8rem; align-items: flex-start;
-            padding: .7rem 0; border-top: 1px solid rgba(255,255,255,.07);
+        /* ── TIER GRID ── */
+        .tier-label {
+            font-size: .67rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: .6px; color: rgba(255,255,255,.38); margin-bottom: .75rem;
         }
-        .panel-features li:first-child { border-top: 0; }
-        .pf-icon {
-            width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
-            background: rgba(76,199,106,.14);
-            display: flex; align-items: center; justify-content: center;
-            color: var(--accent); font-size: .95rem;
+        .tier-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; }
+        .tier-card {
+            border-radius: 13px; padding: .85rem .9rem;
+            background: rgba(255,255,255,.055);
+            border: 1px solid rgba(255,255,255,.1);
+            cursor: default; transition: border-color .2s, background .2s;
         }
-        .pf-strong { display: block; color: rgba(255,255,255,.9); font-size: .84rem; font-weight: 600; }
-        .pf-desc   { color: rgba(255,255,255,.48); font-size: .76rem; line-height: 1.45; margin-top: .1rem; }
-
-        .panel-stats {
-            display: grid; grid-template-columns: 1fr 1fr; gap: .6rem;
-            margin-top: 2.5rem; position: relative; z-index: 2;
+        .tier-card:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.22); }
+        .tier-card-icon { font-size: 1.25rem; margin-bottom: .35rem; line-height: 1; }
+        .tier-card-name {
+            font-family: 'Poppins', sans-serif; font-weight: 800;
+            font-size: .78rem; color: #fff; line-height: 1.15; margin-bottom: .2rem;
         }
-        .ps-item {
-            background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
-            border-radius: 11px; padding: .85rem;
-        }
-        .ps-num { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--accent); line-height: 1; }
-        .ps-lbl { font-size: .68rem; color: rgba(255,255,255,.45); margin-top: .2rem; }
+        .tier-card-desc { font-size: .67rem; color: rgba(255,255,255,.42); line-height: 1.45; }
+        .tc-sub  .tier-card-name { color: #4cc76a; }
+        .tc-acct .tier-card-name { color: #34d4c8; }
+        .tc-pro  .tier-card-name { color: #60a5fa; }
+        .tc-sky  .tier-card-name { color: #c084fc; }
+        .tc-cloud .tier-card-name { color: #fb923c; }
+        .tc-shell .tier-card-name { color: #fbbf24; }
 
         /* ── FORM AREA ── */
         .auth-form-area {
@@ -184,7 +184,7 @@
                 width: 100%; flex-direction: row; align-items: center;
                 gap: 1rem; padding: 1.1rem 1.25rem; justify-content: flex-start;
             }
-            .panel-headline, .panel-sub, .panel-features, .panel-stats { display: none; }
+            .panel-headline, .panel-sub, .tier-label, .tier-grid { display: none; }
             .panel-logo { margin-bottom: 0; }
             .panel-logo .leaf { width: 34px; height: 34px; font-size: .95rem; }
             .panel-logo .wordmark { font-size: 1.2rem; }
@@ -209,39 +209,42 @@
                 <div class="wordmark">Olives <em>BI</em></div>
             </div>
 
-            <div class="panel-headline">Land Data.<br>Revenue Intelligence.<br>Greener Future.</div>
-            <p class="panel-sub">Sign in to access real-time environmental risk assessments, land revenue dashboards, and geospatial intelligence for your locality.</p>
+            <div class="panel-headline">One Platform.<br>Six Account Tiers.<br>Endless Insight.</div>
+            <p class="panel-sub">From environmental news subscribers to continental governance — Olives BI scales with your role.</p>
 
-            <ul class="panel-features">
-                <li>
-                    <div class="pf-icon"><i class="bi bi-geo-alt-fill"></i></div>
-                    <div>
-                        <span class="pf-strong">Locality Intelligence</span>
-                        <span class="pf-desc">Live AQI, waste risk, water bodies, and health scores for any searched area.</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="pf-icon"><i class="bi bi-building-fill-gear"></i></div>
-                    <div>
-                        <span class="pf-strong">IGF Revenue Streams</span>
-                        <span class="pf-desc">Building permits, land registration, business licences, and compliance tracking.</span>
-                    </div>
-                </li>
-                <li>
-                    <div class="pf-icon"><i class="bi bi-bar-chart-line-fill"></i></div>
-                    <div>
-                        <span class="pf-strong">Live Dashboards</span>
-                        <span class="pf-desc">Environmental KPIs and revenue performance tracked in real-time.</span>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <div class="panel-stats">
-            <div class="ps-item"><div class="ps-num">8+</div><div class="ps-lbl">IGF Revenue Streams</div></div>
-            <div class="ps-item"><div class="ps-num">Live</div><div class="ps-lbl">Environmental data</div></div>
-            <div class="ps-item"><div class="ps-num">GIS</div><div class="ps-lbl">Powered intelligence</div></div>
-            <div class="ps-item"><div class="ps-num">100%</div><div class="ps-lbl">Land-data driven</div></div>
+            <div class="tier-label">Choose your portal</div>
+            <div class="tier-grid">
+                <div class="tier-card tc-sub">
+                    <div class="tier-card-icon">📰</div>
+                    <div class="tier-card-name">Subscriber</div>
+                    <div class="tier-card-desc">Environmental news &amp; alerts</div>
+                </div>
+                <div class="tier-card tc-acct">
+                    <div class="tier-card-icon">🏘️</div>
+                    <div class="tier-card-name">Olives Account</div>
+                    <div class="tier-card-desc">Property owner portal</div>
+                </div>
+                <div class="tier-card tc-pro">
+                    <div class="tier-card-icon">🏛️</div>
+                    <div class="tier-card-name">Olives Pro</div>
+                    <div class="tier-card-desc">Municipality &amp; assembly</div>
+                </div>
+                <div class="tier-card tc-sky">
+                    <div class="tier-card-icon">🌐</div>
+                    <div class="tier-card-name">Olives Sky</div>
+                    <div class="tier-card-desc">National oversight</div>
+                </div>
+                <div class="tier-card tc-cloud">
+                    <div class="tier-card-icon">☁️</div>
+                    <div class="tier-card-name">Olives Cloud</div>
+                    <div class="tier-card-desc">Regional body (ECOWAS)</div>
+                </div>
+                <div class="tier-card tc-shell">
+                    <div class="tier-card-icon">🌍</div>
+                    <div class="tier-card-name">Olives Shell</div>
+                    <div class="tier-card-desc">Continental (AU / EU)</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -270,10 +273,10 @@
                 @csrf
 
                 <div class="af-group">
-                    <label class="af-label" for="username">Phone Number / Email</label>
+                    <label class="af-label" for="username">Email / Phone / Olives Card</label>
                     <input class="af-input @error('username') is-invalid @enderror"
                            id="username" type="text" name="username"
-                           placeholder="Enter your phone or email"
+                           placeholder="Enter email, phone, or card number"
                            value="{{ old('username') }}" autocomplete="username" required>
                     @error('username')
                         <div class="af-error"><i class="bi bi-exclamation-circle"></i> {{ $message }}</div>

@@ -107,11 +107,11 @@ class PropertyController extends Controller
 
                 $property->total_payments = DB::table('payments')
                     ->join('bills', 'payments.bills_id', '=', 'bills.bills_id')
-                    ->where('bills.property_id', $property->id)
+                    ->where('bills.property_id', $property->uuid)
                     ->select(
                         DB::raw('SUM(CASE
-                                WHEN payment_mode = "momo" AND transaction_status = "Success" THEN payments.amount
-                                WHEN payment_mode != "momo" THEN payments.amount
+                                WHEN payment_mode = \'momo\' AND transaction_status = \'Success\' THEN payments.amount
+                                WHEN payment_mode != \'momo\' THEN payments.amount
                                 ELSE 0
                          END) as total_payments')
                     )
@@ -344,10 +344,10 @@ class PropertyController extends Controller
         if ($citizen && $property) {
             $bills = Bill::orderBy('created_at', 'DESC')
                 ->with(['property'])
-                ->whereHas('property', function ($query) use ($citizen, $property) {
-                    $query->where('customer_name', $citizen->id)
-                        ->where('property_id', $property->id);
+                ->whereHas('property', function ($query) use ($citizen) {
+                    $query->where('customer_name', $citizen->id);
                 })
+                ->where('property_id', $property->uuid)
                 ->whereNotNull('property_id')
                 ->whereNull('business_id')
                 ->get();
@@ -355,7 +355,7 @@ class PropertyController extends Controller
             $payments = Payment::orderBy('created_at', 'DESC')
                 ->whereHas('bill', function ($query) use ($property) {
                     $query->whereNotNull('property_id')
-                        ->where('property_id', $property->id);
+                        ->where('property_id', $property->uuid);
                 })
                 ->where('transaction_status', 'Success')
                 ->get();

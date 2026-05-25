@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasUuid;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Bill extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
 
     protected $fillable = [
         'bills_id',
@@ -24,14 +27,28 @@ class Bill extends Model
         'created_by',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (Bill $bill) {
+            if (empty($bill->uuid)) {
+                $bill->uuid = (string) Str::uuid();
+            }
+        });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
     public function property()
     {
-        return $this->belongsTo(Property::class, 'property_id');
+        return $this->belongsTo(Property::class, 'property_id', 'uuid');
     }
 
     public function business()
     {
-        return $this->belongsTo(Business::class, 'business_id');
+        return $this->belongsTo(Business::class, 'business_id', 'uuid');
     }
 
     public function assembly()
@@ -52,7 +69,7 @@ class Bill extends Model
     public function successfulPayments()
     {
         return $this->hasMany(Payment::class, 'bills_id', 'bills_id')
-            ->where('transaction_status', 'Success');
+            ->whereRaw('LOWER(transaction_status) = ?', ['success']);
     }
 
     public function getCurrentAmountAttribute()
@@ -73,14 +90,14 @@ class Bill extends Model
     public function getTotalPaymentsSumAttribute()
     {
         return $this->payments()
-            ->where('transaction_status', 'Success')
+            ->whereRaw('LOWER(transaction_status) = ?', ['success'])
             ->sum('amount');
     }
 
     public function getLastPaymentAttribute()
     {
         return $this->payments()
-            ->where('transaction_status', 'Success')
+            ->whereRaw('LOWER(transaction_status) = ?', ['success'])
             ->orderBy('created_at', 'desc')
             ->value('amount');
     }

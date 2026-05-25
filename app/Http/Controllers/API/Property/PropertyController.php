@@ -13,6 +13,7 @@ use App\Models\Division;
 use App\Models\Owner;
 use App\Models\Polygon;
 use App\Models\Property;
+use App\Support\GlobalLocation;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
@@ -46,11 +47,13 @@ class PropertyController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($uuid)
     {
-        $property = Property::where('id', $id)
-            ->orWhere('erms_id', $id)
-            ->orWhere('account_no', $id)
+        $property = Property::where(function ($query) use ($uuid) {
+                $query->whereUuidOrId($uuid)
+                    ->orWhere('erms_id', $uuid)
+                    ->orWhere('account_no', $uuid);
+            })
             ->with([
                 'customer',
                 'entityType',
@@ -76,15 +79,16 @@ class PropertyController extends Controller
         ]);
     }
 
-    public function customerProperty($id)
+    public function customerProperty($uuid)
     {
-        $matchingOwnerIds = Owner::where(function ($query) use ($id) {
-            $query->where('erms_id', $id)
-                ->orWhere('tin_no', $id)
-                ->orWhere('fname', 'LIKE', "%$id%")
-                ->orWhere('lname', 'LIKE', "%$id%")
-                ->orWhere('phone_no_primary', $id)
-                ->orWhere('digital_address', $id);
+        $matchingOwnerIds = Owner::where(function ($query) use ($uuid) {
+            $query->whereUuidOrId($uuid)
+                ->orWhere('erms_id', $uuid)
+                ->orWhere('tin_no', $uuid)
+                ->orWhere('fname', 'LIKE', "%$uuid%")
+                ->orWhere('lname', 'LIKE', "%$uuid%")
+                ->orWhere('phone_no_primary', $uuid)
+                ->orWhere('digital_address', $uuid);
         })
             ->pluck('erms_id');
 
@@ -95,12 +99,13 @@ class PropertyController extends Controller
             'polygon.block.division',
             'polygon:id,cntr_x_coord,cntr_y_coord,block_id',
         ])
-            ->where(function ($query) use ($id, $matchingOwnerIds) {
-                $query->where('erms_id', $id)
-                    ->orWhere('account_no', $id)
-                    ->orWhere('digitaladdress', $id)
-                    ->orWhere('streetname', 'LIKE', "%$id%")
-                    ->orWhere('location', 'LIKE', "%$id%");
+            ->where(function ($query) use ($uuid, $matchingOwnerIds) {
+                $query->whereUuidOrId($uuid)
+                    ->orWhere('erms_id', $uuid)
+                    ->orWhere('account_no', $uuid)
+                    ->orWhere('digitaladdress', $uuid)
+                    ->orWhere('streetname', 'LIKE', "%$uuid%")
+                    ->orWhere('location', 'LIKE', "%$uuid%");
 
                 if ($matchingOwnerIds->isNotEmpty()) {
                     $query->orWhereIn('owner_id', $matchingOwnerIds);
@@ -148,20 +153,27 @@ class PropertyController extends Controller
             throw ValidationException::withMessages(['assembly_code' => 'The selected assembly code is invalid']);
         }
 
-        $division = Division::where('assembly_code', $data['assembly_code'])->find($data['division_id']);
+        $division = Division::where('assembly_code', $data['assembly_code'])
+            ->whereUuidOrId($data['division_id'])
+            ->first();
 
         if (! $division) {
             throw ValidationException::withMessages(['division_id' => 'The selected division id is invalid']);
         }
 
+        $data['division_id'] = $division->id;
+
         $block = Block::query()
             ->where('assembly_code', $data['assembly_code'])
             ->where('division_id', $data['division_id'])
-            ->find($data['block_id']);
+            ->whereUuidOrId($data['block_id'])
+            ->first();
 
         if (! $block) {
             throw ValidationException::withMessages(['block_id' => 'The selected block id is invalid']);
         }
+
+        $data['block_id'] = $block->id;
 
         try {
             $propertyId = app(GeneratePropertyIDAction::class)
@@ -198,6 +210,10 @@ class PropertyController extends Controller
             'digitaladdress' => $data['digitaladdress'] ?? null,
             'location' => $data['location'] ?? null,
             'streetname' => $data['streetname'] ?? null,
+            ...GlobalLocation::from(
+                $data,
+                $data['digitaladdress'] ?? $data['location'] ?? $data['streetname'] ?? null
+            ),
             'prop_rev_id' => null,
             'is_bsc_rate' => '{"basic": true, "sanit": true}',
             'owner_id' => $data['owner_id'],
@@ -226,9 +242,15 @@ class PropertyController extends Controller
         ]);
     }
 
-    public function update(UpdatePropertyRequest $request, $id)
+    public function update(UpdatePropertyRequest $request, $uuid)
     {
-        $property = Property::where('id', $id)->orWhere('erms_id', $id)->first();
+        $property = Property::query()
+            ->where(function ($query) use ($uuid) {
+                $query->whereUuidOrId($uuid)
+                    ->orWhere('erms_id', $uuid)
+                    ->orWhere('account_no', $uuid);
+            })
+            ->first();
 
         if (empty($property)) {
             return response()->json([
@@ -237,7 +259,13 @@ class PropertyController extends Controller
         }
 
         $data = $request->validated();
-        $block = Block::where('id', $data['block_id'])->first();
+        $block = Block::whereUuidOrId($data['block_id'])->first();
+
+        if (! $block) {
+            throw ValidationException::withMessages(['block_id' => 'The selected block id is invalid']);
+        }
+
+        $data['block_id'] = $block->id;
         $cntr_geom = 'POINT ('.$data['longitude'].' '.$data['latitude'].')';
 
         $polygonData = [
@@ -255,6 +283,10 @@ class PropertyController extends Controller
             'digitaladdress' => $data['digitaladdress'] ?? null,
             'location' => $data['location'] ?? null,
             'streetname' => $data['streetname'] ?? null,
+            ...GlobalLocation::from(
+                $data,
+                $data['digitaladdress'] ?? $data['location'] ?? $data['streetname'] ?? null
+            ),
             'is_bsc_rate' => '{"basic": true, "sanit": true}',
             'owner_id' => $data['owner_id'],
             'is_rated' => $data['is_rated'] === 'Yes' ? '1' : '0',

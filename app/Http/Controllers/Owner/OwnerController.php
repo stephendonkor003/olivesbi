@@ -117,8 +117,8 @@ class OwnerController extends Controller
                             </div>
                             <div class="dropdown-menu dropdown-menu-end">
                                 <div class="py-2">
-                                    <a class="dropdown-item" href="'.route('owners.show', $owner->id).'">View Rate Payer Record</a>
-                                    <a class="dropdown-item" href="'.route('owners.edit', $owner->id).'">Edit Rate Payer Record</a>
+                                    <a class="dropdown-item" href="'.route('owners.show', $owner).'">View Rate Payer Record</a>
+                                    <a class="dropdown-item" href="'.route('owners.edit', $owner).'">Edit Rate Payer Record</a>
                                 </div>
                             </div>
                         </div>

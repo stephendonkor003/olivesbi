@@ -10,13 +10,16 @@ use App\Http\Requests\Bill\CreateSingleBillRequest;
 use App\Jobs\Bill\GeneratePropertyBillsJob;
 use App\Models\Assembly;
 use App\Models\Bill;
-use App\Models\BillAdjustment;
 use App\Models\Block;
 use App\Models\Division;
 use App\Models\Payment;
+use App\Models\ProIntegration;
+use App\Models\ProPaymentRequest;
 use App\Models\Property;
 use App\Models\Rate;
 use App\Models\RevenueStream;
+use App\Services\PropertyRateBillGenerator;
+use App\Services\ProPaymentGatewayService;
 use App\Notifications\BillGenerationCompletedNotification;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,6 +27,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -398,7 +402,7 @@ class BillsManagementController extends Controller
 
             // Get all properties that don't have bills yet
             $propertyIds = Property::where('assembly_code', $assemblyCode)
-                ->whereNotIn('id', function ($query) use ($billYear) {
+                ->whereNotIn('uuid', function ($query) use ($billYear) {
                     $query->select('property_id')
                         ->from('bills')
                         ->whereNotNull('property_id')
@@ -548,7 +552,7 @@ class BillsManagementController extends Controller
             ->when(! empty($request->user()->assembly_code), function ($query) use ($request) {
                 $query->where('assembly_code', $request->user()->assembly_code);
             })
-            ->whereNotIn('id', function ($query) {
+            ->whereNotIn('uuid', function ($query) {
                 $query->select('property_id')
                     ->from('bills')
                     ->whereNotNull('property_id')
@@ -576,7 +580,7 @@ class BillsManagementController extends Controller
                         $q->where('id', $request->division_id);
                     });
                 })
-                ->whereNotIn('id', function ($query) use ($request) {
+                ->whereNotIn('uuid', function ($query) use ($request) {
                     $query->select('property_id')
                         ->from('bills')
                         ->whereNotNull('property_id')
@@ -648,7 +652,7 @@ class BillsManagementController extends Controller
             ->when(! empty($request->user()->assembly_code), function ($query) use ($request) {
                 $query->where('assembly_code', $request->user()->assembly_code);
             })
-            ->whereNotIn('id', function ($query) {
+            ->whereNotIn('uuid', function ($query) {
                 $query->select('property_id')
                     ->from('bills')
                     ->whereNotNull('property_id')
@@ -681,7 +685,7 @@ class BillsManagementController extends Controller
                         $q->where('id', $request->block_id);
                     });
                 })
-                ->whereNotIn('id', function ($query) use ($request) {
+                ->whereNotIn('uuid', function ($query) use ($request) {
                     $query->select('property_id')
                         ->from('bills')
                         ->whereNotNull('property_id')
@@ -746,7 +750,7 @@ class BillsManagementController extends Controller
             ->selectRaw("CONCAT(entity_owners.fname, ' ', entity_owners.lname, ' (', properties.erms_id, ')') AS name")
             ->join('entity_owners', 'properties.owner_id', '=', 'entity_owners.erms_id')
             ->where('properties.assembly_code', $request->assembly_code)
-            ->whereNotIn('properties.id', function ($query) use ($billYear) {
+            ->whereNotIn('properties.uuid', function ($query) use ($billYear) {
                 $query->select('property_id')
                     ->from('bills')
                     ->whereNotNull('property_id')
@@ -761,9 +765,7 @@ class BillsManagementController extends Controller
     public function receipt(Bill $bill)
     {
         if ($bill->property && $bill->property->customer) {
-            $rateImposed = RevenueStream::where('id', $bill->property->prop_rev_id)
-                ->where('assembly_code', $bill->property->assembly_code)
-                ->first();
+            $rateImposed = $this->propertyRevenueStream($bill->property);
         } elseif ($bill->business && $bill->business->customer) {
             $rateImposed = RevenueStream::where('id', $bill->business->buss_rev_id)
                 ->where('assembly_code', $bill->business->assembly_code)
@@ -778,9 +780,7 @@ class BillsManagementController extends Controller
     public function show(Bill $bill)
     {
         if ($bill->property && $bill->property->customer) {
-            $rateImposed = RevenueStream::where('id', $bill->property->prop_rev_id)
-                ->where('assembly_code', $bill->property->assembly_code)
-                ->first();
+            $rateImposed = $this->propertyRevenueStream($bill->property);
         } elseif ($bill->business && $bill->business->customer) {
             $rateImposed = Rate::where('zone_id', $bill->business->zone_id)
                 ->where('property_use_id', $bill->business->property_use_id)
@@ -788,7 +788,7 @@ class BillsManagementController extends Controller
                 ->first();
         }
 
-        $bill['rate_imposed'] = isset($rateImposed) ? $rateImposed->rate_imposed : 0;
+        $bill['rate_imposed'] = isset($rateImposed) ? ($rateImposed->rate_imposed ?? $rateImposed->rate_impost ?? $rateImposed->flat_rate ?? 0) : 0;
 
         return view('bills.show', compact('bill'));
     }
@@ -796,14 +796,12 @@ class BillsManagementController extends Controller
     public function publicShow($bill)
     {
         $bill = Bill::query()->where(function (Builder $query) use ($bill) {
-            $query->where('bills_id', $bill)
-                ->orWhere('id', $bill);
+            $query->whereUuidOrId($bill)
+                ->orWhere('bills_id', $bill);
         })->firstOrFail();
 
         if ($bill->property && $bill->property->customer) {
-            $rateImposed = RevenueStream::where('id', $bill->property->prop_rev_id)
-                ->where('assembly_code', $bill->property->assembly_code)
-                ->first();
+            $rateImposed = $this->propertyRevenueStream($bill->property);
         } elseif ($bill->business && $bill->business->customer) {
             $rateImposed = Rate::where('zone_id', $bill->business->zone_id)
                 ->where('property_use_id', $bill->business->property_use_id)
@@ -811,9 +809,47 @@ class BillsManagementController extends Controller
                 ->first();
         }
 
-        $bill['rate_imposed'] = isset($rateImposed) ? $rateImposed->rate_imposed : 0;
+        $bill['rate_imposed'] = isset($rateImposed) ? ($rateImposed->rate_imposed ?? $rateImposed->rate_impost ?? $rateImposed->flat_rate ?? 0) : 0;
 
         return view('bills.public-show', compact('bill'));
+    }
+
+    private function propertyRevenueStream(Property $property): ?RevenueStream
+    {
+        $reference = trim((string) $property->prop_rev_id);
+
+        if ($reference === '') {
+            return null;
+        }
+
+        $query = RevenueStream::where('assembly_code', $property->assembly_code);
+
+        $query->where(function ($query) use ($reference) {
+            $hasCondition = false;
+
+            if (ctype_digit($reference)) {
+                $query->where('id', (int) $reference);
+                $hasCondition = true;
+            }
+
+            if (Str::isUuid($reference) && Schema::hasColumn('revenue_streams', 'uuid')) {
+                $method = $hasCondition ? 'orWhere' : 'where';
+                $query->{$method}('uuid', $reference);
+                $hasCondition = true;
+            }
+
+            if (Schema::hasColumn('revenue_streams', 'erms_id')) {
+                $method = $hasCondition ? 'orWhere' : 'where';
+                $query->{$method}('erms_id', $reference);
+                $hasCondition = true;
+            }
+
+            if (! $hasCondition) {
+                $query->whereRaw('1 = 0');
+            }
+        });
+
+        return $query->first();
     }
 
     public function edit($id)
@@ -821,12 +857,12 @@ class BillsManagementController extends Controller
         // Logic for displaying the form to edit a bill
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, Bill $bill)
     {
         // Logic for updating a bill
     }
 
-    public function destroy($id)
+    public function destroy(Bill $bill)
     {
         // Logic for deleting a bill
     }
@@ -849,7 +885,7 @@ class BillsManagementController extends Controller
             ->when(! empty($user->assembly_code), function ($query) use ($user) {
                 $query->where('properties.assembly_code', $user->assembly_code);
             })
-            ->whereNotIn('properties.id', function ($query) use ($billYear) {
+            ->whereNotIn('properties.uuid', function ($query) use ($billYear) {
                 $query->select('property_id')
                     ->from('bills')
                     ->whereNotNull('property_id')
@@ -880,7 +916,7 @@ class BillsManagementController extends Controller
                 $allPropertyIds = DB::table('properties')
                     ->select('id')
                     ->where('assembly_code', $assemblyCode)
-                    ->whereNotIn('id', function ($query) use ($billYear) {
+                    ->whereNotIn('uuid', function ($query) use ($billYear) {
                         $query->select('property_id')
                             ->from('bills')
                             ->whereNotNull('property_id')
@@ -896,121 +932,32 @@ class BillsManagementController extends Controller
                 $propertyIds = $allPropertyIds;
             }
 
-            // Calculate bills directly in the database using raw SQL for performance
-            $previewData = DB::table('properties as p')
-                ->select([
-                    'p.erms_id as property_no',
-                    DB::raw("CONCAT(COALESCE(eo.fname, ''), ' ', COALESCE(eo.lname, '')) as owner_name"),
-                    'p.rateable_value',
-                    'rs.rate_impost',
-                    'rs.flat_rate',
-                    'rs.min_amount',
-                    DB::raw("
-                        CASE
-                            WHEN rs.is_rated = 'Y' THEN
-                                GREATEST(
-                                    rs.rate_impost * COALESCE(p.rateable_value, 0),
-                                    COALESCE(rs.min_amount, 0)
-                                )
-                            WHEN rs.is_rated = 'N' THEN
-                                GREATEST(
-                                    COALESCE(rs.flat_rate, 0),
-                                    COALESCE(rs.min_amount, 0)
-                                )
-                            ELSE
-                                GREATEST(
-                                    rs.rate_impost * COALESCE(p.rateable_value, 0),
-                                    COALESCE(rs.min_amount, 0)
-                                )
-                        END as calculated_bill
-                    "),
-                    'pol.block_id',
-                    'b.division_id',
-                ])
-                ->leftJoin('entity_owners as eo', 'p.owner_id', '=', 'eo.erms_id')
-                ->leftJoin('revenue_streams as rs', function ($join) use ($assemblyCode) {
-                    $join->on('p.prop_rev_id', '=', 'rs.id')
-                        ->where('rs.assembly_code', '=', $assemblyCode);
-                })
-                ->leftJoin('polygons as pol', 'p.polygon_id', '=', 'pol.id')
-                ->leftJoin('blocks as b', 'pol.block_id', '=', 'b.id')
-                ->where('p.assembly_code', $assemblyCode)
-                ->whereIn('p.id', $propertyIds)
-                ->whereNotNull('rs.id')
-                ->get();
+            $summary = app(PropertyRateBillGenerator::class)->generate(
+                $assemblyCode,
+                (string) $billYear,
+                (string) ($request->user()?->uuid ?: $request->user()?->id ?: 'system'),
+                [
+                    'dry_run' => true,
+                    'notify' => false,
+                    'only_unbilled' => true,
+                ],
+                (array) $propertyIds
+            );
 
-            // Get bill adjustments for discount calculation
-            $billAdjustments = BillAdjustment::with('revenueStreamType')
-                ->where('assembly_code', $assemblyCode)
-                ->where('discount_year', $billYear)
-                ->whereHas('revenueStreamType', function ($q) {
-                    $q->where('name', 'Property Rate');
-                })
-                ->get();
-
-            // Build discount lookup maps for efficient matching
-            $assemblyDiscounts = 0;
-            $divisionDiscounts = [];
-            $blockDiscounts = [];
-            $ermsDiscounts = [];
-
-            foreach ($billAdjustments as $discount) {
-                if ($discount->discount_type === 'Assembly Discount') {
-                    $assemblyDiscounts += $discount->discount_amount;
-                } elseif ($discount->discount_type === 'Division Discount' && $discount->division_id) {
-                    if (! isset($divisionDiscounts[$discount->division_id])) {
-                        $divisionDiscounts[$discount->division_id] = 0;
-                    }
-                    $divisionDiscounts[$discount->division_id] += $discount->discount_amount;
-                } elseif ($discount->discount_type === 'Block Discount' && $discount->block_id) {
-                    if (! isset($blockDiscounts[$discount->block_id])) {
-                        $blockDiscounts[$discount->block_id] = 0;
-                    }
-                    $blockDiscounts[$discount->block_id] += $discount->discount_amount;
-                } elseif ($discount->erms_id && is_array($discount->erms_id)) {
-                    // Handle JSON array of erms_ids
-                    foreach ($discount->erms_id as $ermsId) {
-                        if (! isset($ermsDiscounts[$ermsId])) {
-                            $ermsDiscounts[$ermsId] = 0;
-                        }
-                        $ermsDiscounts[$ermsId] += $discount->discount_amount;
-                    }
-                }
-            }
-
-            // Apply discounts and format results
-            $results = [];
-            foreach ($previewData as $property) {
-                $discount = $assemblyDiscounts;
-
-                // Add division discount
-                if ($property->division_id && isset($divisionDiscounts[$property->division_id])) {
-                    $discount += $divisionDiscounts[$property->division_id];
-                }
-
-                // Add block discount
-                if ($property->block_id && isset($blockDiscounts[$property->block_id])) {
-                    $discount += $blockDiscounts[$property->block_id];
-                }
-
-                // Add ERMS-specific discount
-                if (isset($ermsDiscounts[$property->property_no])) {
-                    $discount += $ermsDiscounts[$property->property_no];
-                }
-
-                $finalBill = max(0, $property->calculated_bill - $discount);
-
-                $results[] = [
-                    'property_no' => $property->property_no,
-                    'owner_name' => trim($property->owner_name),
-                    'rateable_value' => number_format($property->rateable_value ?? 0, 2),
-                    'rate_impost' => number_format($property->rate_impost ?? 0, 2),
-                    'flat_rate' => number_format($property->flat_rate ?? 0, 2),
-                    'min_amount' => number_format($property->min_amount ?? 0, 2),
-                    'discount' => number_format($discount, 2),
-                    'final_bill' => number_format($finalBill, 2),
+            $results = collect($summary['items'])->map(function (array $item) {
+                return [
+                    'property_no' => $item['property'] ?? ($item['property_uuid'] ?? 'N/A'),
+                    'owner_name' => $item['owner_name'] ?: ($item['reason'] ?? ''),
+                    'rateable_value' => number_format((float) ($item['rateable_value'] ?? 0), 2),
+                    'rate_impost' => number_format((float) ($item['rate_impost'] ?? 0), 4),
+                    'flat_rate' => number_format((float) ($item['flat_rate'] ?? 0), 2),
+                    'min_amount' => number_format((float) ($item['min_amount'] ?? 0), 2),
+                    'discount' => number_format((float) ($item['discount_amount'] ?? 0), 2),
+                    'final_bill' => $item['billable']
+                        ? number_format((float) ($item['net_amount'] ?? $item['amount'] ?? 0), 2)
+                        : ($item['reason'] ?? 'Not billable'),
                 ];
-            }
+            })->values()->all();
 
             return response()->json(['data' => $results]);
 
@@ -1031,13 +978,31 @@ class BillsManagementController extends Controller
     public function initializePublicPayment(Request $request, Bill $bill)
     {
         try {
-            // Validate request
-            $request->validate([
+            $data = $request->validate([
                 'amount' => 'required|numeric|min:1',
             ]);
 
-            // Generate unique reference
-            $reference = 'BILL-'.$bill->bills_id.'-'.time();
+            $bill->loadMissing(['assembly', 'property.customer', 'business.customer', 'successfulPayments']);
+
+            $totalDue = max(0, (float) $bill->amount + (float) $bill->arrears - (float) $bill->discount_amount);
+            $paid = (float) $bill->successfulPayments->sum('amount');
+            $balance = max(0, $totalDue - $paid);
+            $amount = round((float) $data['amount'], 2);
+
+            if ($balance <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This bill has already been settled.',
+                ], 422);
+            }
+
+            if ($amount > $balance) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Amount cannot exceed the outstanding balance.',
+                    'balance' => $balance,
+                ], 422);
+            }
 
             $phone = $bill->property?->customer?->phone_no_primary
                 ?? $bill->business?->customer?->phone_no_primary
@@ -1056,46 +1021,52 @@ class BillsManagementController extends Controller
                 $payerEmail = Str::random(6).'@ermsplus.africa';
             }
 
-            // Initialize Paystack payment
-            $paystackData = [
-                'email' => $payerEmail,
-                'amount' => $request->amount * 100, // Convert to pesewas
-                'reference' => $reference,
-                'callback_url' => route('public.payments.verify').'?is_public=1',
-                'currency' => 'GHS',
-            ];
+            $integration = ProIntegration::payment()
+                ->default()
+                ->where('assembly_code', $bill->assembly_code)
+                ->first();
 
-            $response = Http::withToken(config('services.paystack.secret_key'))
-                ->baseUrl(config('services.paystack.url'))
-                ->throw()
-                ->post('transaction/initialize', $paystackData);
-
-            if ($response->successful()) {
-                // Create payment record
-                $payment = Payment::create([
-                    'bills_id' => $bill->bills_id,
-                    'assembly_code' => $bill->assembly_code,
-                    'amount' => $request->amount,
-                    'payment_mode' => 'pending',
-                    'payment_source' => 'Paystack',
-                    'transaction_status' => 'Pending',
-                    'transaction_id' => $reference,
-                ]);
-
-                $authUrl = $response->json()['data']['authorization_url'];
-                $payment->update(['authorization_url' => $authUrl]);
-
+            if (! $integration) {
                 return response()->json([
-                    'success' => true,
-                    'authorization_url' => $authUrl,
-                    'message' => 'Payment initialized successfully',
-                ]);
+                    'success' => false,
+                    'message' => 'This assembly has not configured an Olives Pro payment gateway yet.',
+                ], 422);
             }
 
+            $paymentRequest = ProPaymentRequest::create([
+                'pro_user_uuid' => $integration->pro_user_uuid,
+                'integration_uuid' => $integration->uuid,
+                'assembly_code' => $bill->assembly_code,
+                'bill_uuid' => $bill->uuid,
+                'purpose' => 'bill',
+                'payer_email' => $payerEmail,
+                'payer_phone' => $phone,
+                'description' => 'Bill '.$bill->bills_id,
+                'amount' => $amount,
+                'currency_code' => strtoupper(trim((string) ($bill->assembly?->currency_code ?: 'GHS'))),
+                'provider' => $integration->provider,
+                'status' => 'pending',
+                'expires_at' => now()->addDays(14),
+            ]);
+
+            $paymentRequest->update([
+                'public_url' => route('public.pro-payment-requests.show', $paymentRequest),
+            ]);
+
+            $checkout = app(ProPaymentGatewayService::class)->createCheckout($paymentRequest, $integration);
+            $paymentRequest->update([
+                'payment_reference' => $checkout['reference'] ?? $paymentRequest->payment_reference,
+                'payment_url' => $checkout['payment_url'] ?: $paymentRequest->public_url,
+                'raw_response' => $checkout['raw_response'] ?? [],
+                'status' => 'sent',
+            ]);
+
             return response()->json([
-                'success' => false,
-                'message' => 'Failed to initialize payment. Please try again.',
-            ], 500);
+                'success' => true,
+                'authorization_url' => $paymentRequest->payment_url,
+                'public_url' => $paymentRequest->public_url,
+                'message' => 'Payment initialized successfully',
+            ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([

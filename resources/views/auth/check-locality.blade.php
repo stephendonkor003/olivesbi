@@ -1,52 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    @include('partials.public-seo', [
-        'seoTitle' => 'Check Locality - Air Quality, Waste, Hazards & Environmental Data | Olives BI',
-        'seoDescription' => 'Check any locality with Olives BI for air quality, weather, elevation, soil, biodiversity, waste sites, businesses, waterways, hazards, and environmental risk using open data and maps.',
-        'seoKeywords' => 'check locality, air quality checker, environmental risk map, waste management companies, open street maps environmental data, biodiversity data, soil data, locality intelligence Ghana, Olives BI locality',
-        'seoUrl' => route('locality.check'),
-        'seoMainEntity' => [
-            '@type' => 'WebApplication',
-            'name' => 'Olives BI Check Locality',
-            'applicationCategory' => 'EnvironmentalApplication',
-            'operatingSystem' => 'Web',
-            'featureList' => [
-                'Air quality data',
-                'Waste management mapping',
-                'Environmental hazards',
-                'OpenStreetMap locality search',
-                'Soil, elevation and biodiversity open data',
-            ],
-        ],
-    ])
+@extends('dashboard.tiers.partials.tier-page-layout')
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+@section('page-title', 'Check Locality')
+@section('page-scope', 'Check Locality')
+
+@section('page-head-extra')
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 
     <style>
+        /* locality-specific variables (do not redefine --accent / --primary — inherited from tier layout) */
         :root {
-            --primary:       #1a5c2a;
             --primary-light: #2d9e4b;
-            --accent:        #4cc76a;
             --accent-soft:   #a8e6bc;
             --light-green:   #e8f5e9;
             --dark-bg:       #071a0d;
-            --muted:         #6b7280;
-            --line:          rgba(26,92,42,.1);
             --risk-low:      #1a5c2a;
             --risk-mod:      #b97c05;
             --risk-high:     #c0392b;
         }
-        * { box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        body { font-family: 'Inter', sans-serif; background: #f0f7f1; color: #1a2e1e; margin: 0; }
 
         /* ── NAVBAR ── */
         .cl-nav {
@@ -484,68 +454,19 @@
             .nav-mobile-menu.open { display: flex !important; }
         }
     </style>
-</head>
-<body>
+@endsection
 
-<!-- ── NAVBAR ── -->
-<nav class="cl-nav">
-    <div class="container d-flex align-items-center justify-content-between gap-3">
-        <a href="{{ route('auth.LandingPage') }}" class="brand">
-            <div class="leaf">🌿</div>
-            Olives <em>BI</em>
-        </a>
+@section('page-content')
 
-        <div class="cl-nav-links">
-            <a href="{{ route('auth.LandingPage') }}">Home</a>
-            <a href="{{ route('auth.LandingPage') }}#features">Features</a>
-            <a href="{{ route('locality.check') }}" class="active">Check Locality</a>
-            <a href="{{ route('igf.index') }}" style="font-weight:600;">Business We Support</a>
-            <a href="{{ route('donation.index') }}" style="color:var(--accent); font-weight:700;">
-                <i class="bi bi-heart-fill" style="font-size:.7rem;"></i> Support
-            </a>
-        </div>
-
-        <div class="d-flex gap-2 align-items-center">
-            <a href="{{ route('auth.index') }}" class="btn-nav-back d-none d-sm-inline-flex">Sign In</a>
-            <button class="nav-mobile-toggle" id="navToggle" type="button"
-                style="display:none; background:none; border:1.5px solid rgba(255,255,255,.35); border-radius:7px; padding:.3rem .55rem; cursor:pointer; color:#fff; font-size:1.1rem; line-height:1;">
-                <i class="bi bi-list"></i>
-            </button>
-        </div>
+{{-- Page hero --}}
+<div class="tier-hero" style="margin-bottom:1.25rem;">
+    <div>
+        <div class="hero-badge"><i class="bi bi-geo-alt-fill"></i> Environmental Intelligence</div>
+        <div class="hero-title">Check Locality</div>
+        <div class="hero-sub">Enter an area name or coordinates to check air quality, waste sites, hazards, land use, and a composite environmental risk score.</div>
     </div>
-
-    <!-- Mobile slide-down menu -->
-    <div class="nav-mobile-menu" id="navMobileMenu"
-         style="display:none; background:rgba(7,26,13,.98); padding:.75rem 0; border-top:1px solid rgba(255,255,255,.1);">
-        <div class="container d-flex flex-column gap-1">
-            <a href="{{ route('auth.LandingPage') }}" style="color:rgba(255,255,255,.8); padding:.5rem .75rem; border-radius:7px; text-decoration:none; font-size:.9rem; font-weight:500;">🏠 Home</a>
-            <a href="{{ route('auth.LandingPage') }}#features" style="color:rgba(255,255,255,.8); padding:.5rem .75rem; border-radius:7px; text-decoration:none; font-size:.9rem; font-weight:500;">✨ Features</a>
-            <a href="{{ route('locality.check') }}" style="color:var(--accent); padding:.5rem .75rem; border-radius:7px; text-decoration:none; font-size:.9rem; font-weight:700;">📍 Check Locality</a>
-            <a href="{{ route('igf.index') }}" style="color:rgba(255,255,255,.8); padding:.5rem .75rem; border-radius:7px; text-decoration:none; font-size:.9rem; font-weight:500;">🏛️ Business We Support</a>
-            <a href="{{ route('donation.index') }}" style="color:var(--accent); padding:.5rem .75rem; border-radius:7px; text-decoration:none; font-size:.9rem; font-weight:700;">❤️ Support</a>
-            <hr style="border-color:rgba(255,255,255,.1); margin:.25rem 0;">
-            <a href="{{ route('auth.index') }}" style="color:rgba(255,255,255,.7); padding:.5rem .75rem; border-radius:7px; text-decoration:none; font-size:.88rem;">Sign In</a>
-        </div>
-    </div>
-</nav>
-
-<!-- ── HERO STRIP ── -->
-<div class="cl-hero">
-    <div class="container cl-hero-inner">
-        <div class="row align-items-center">
-            <div class="col-lg-7">
-                <div class="cl-badge"><i class="bi bi-geo-alt-fill"></i> Live Environmental Intelligence</div>
-                <h1>Environmental <span>Locality Check</span></h1>
-                <p>Enter an area name, coordinates, or use your GPS to instantly read air quality, mapped businesses, waste companies, hazards, land use, natural features and a composite environmental risk score.</p>
-            </div>
-            <div class="col-lg-5 d-none d-lg-flex justify-content-end gap-3" style="font-size:2.5rem;">
-                <span title="Air Quality">💨</span>
-                <span title="Water">💧</span>
-                <span title="Forest">🌲</span>
-                <span title="Waste">♻️</span>
-                <span title="Hazards">⚠️</span>
-            </div>
-        </div>
+    <div style="font-size:2rem; opacity:.35; display:flex; gap:.65rem; align-items:center; flex-shrink:0;">
+        <span>💨</span><span>💧</span><span>🌲</span><span>♻️</span><span>⚠️</span>
     </div>
 </div>
 
@@ -815,13 +736,9 @@
     </div>
 </div><!-- /container -->
 
-<!-- ── FOOTER ── -->
-<footer class="cl-footer">
-    <span>🌿 Olives BI</span> — Environmental Protection Intelligence &nbsp;·&nbsp; © {{ date('Y') }}
-    &nbsp;·&nbsp; <a href="{{ route('auth.LandingPage') }}" style="color:var(--accent); text-decoration:none;">Home</a>
-    &nbsp;·&nbsp; <a href="{{ route('donation.index') }}" style="color:var(--accent); text-decoration:none;">Support Us</a>
-</footer>
+@endsection
 
+@push('page-scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
     const DEFAULT  = { lat: 5.6037, lon: -0.1870 };
@@ -1539,5 +1456,4 @@
         setRisk('hr-plants-val', Math.round(plantScore));
     }
 </script>
-</body>
-</html>
+@endpush

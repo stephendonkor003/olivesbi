@@ -93,10 +93,10 @@
                                                 <div class="dropdown-menu dropdown-menu-end">
                                                     <div class="py-2">
                                                         <a class="dropdown-item"
-                                                            href=" {{ route('property-classes.show', $propertyClass->id) }}">View
+                                                            href=" {{ route('property-classes.show', $propertyClass) }}">View
                                                         </a>
                                                         <a class="dropdown-item"
-                                                            href=" {{ route('property-classes.edit', $propertyClass->id) }}">Edit
+                                                            href=" {{ route('property-classes.edit', $propertyClass) }}">Edit
                                                         </a>
                                                     </div>
                                                 </div>

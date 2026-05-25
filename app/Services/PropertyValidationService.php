@@ -73,7 +73,7 @@ class PropertyValidationService
      */
     public function validateCoordinatesInBlock(float $latitude, float $longitude, string $blockId): bool
     {
-        $block = Block::find($blockId);
+        $block = Block::whereUuidOrId($blockId)->first();
 
         if (! $block || ! $block->geofence) {
             return false;
@@ -87,7 +87,7 @@ class PropertyValidationService
      */
     public function validateCoordinatesInDivision(float $latitude, float $longitude, string $divisionId): bool
     {
-        $division = Division::find($divisionId);
+        $division = Division::whereUuidOrId($divisionId)->first();
 
         if (! $division || ! $division->geofence) {
             return false;

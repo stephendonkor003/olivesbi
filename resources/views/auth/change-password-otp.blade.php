@@ -1,412 +1,279 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERMS PLUS – Send OTP</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Reset Password — Olives BI</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        :root {
+            --primary:       #1a5c2a;
+            --primary-light: #2d9e4b;
+            --accent:        #4cc76a;
+            --dark-bg:       #071a0d;
+            --light-green:   #e8f5e9;
+            --muted:         #6b7280;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; font-family: 'Inter', sans-serif; }
+        body { display: flex; min-height: 100vh; background: #f4faf5; }
+
+        /* ── LEFT PANEL ── */
+        .auth-panel {
+            width: 420px; flex-shrink: 0;
+            background: linear-gradient(160deg, #071a0d 0%, #0e3318 55%, #1a5c2a 100%);
+            position: relative; overflow: hidden;
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 2.5rem 2.25rem;
+        }
+        .auth-panel::before {
+            content: ''; position: absolute; width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(76,199,106,.1), transparent 65%);
+            top: -140px; right: -200px; border-radius: 50%; pointer-events: none;
+        }
+        .auth-panel::after {
+            content: ''; position: absolute; width: 350px; height: 350px;
+            background: radial-gradient(circle, rgba(45,158,75,.09), transparent 65%);
+            bottom: -100px; left: -100px; border-radius: 50%; pointer-events: none;
+        }
+        .panel-z { position: relative; z-index: 2; }
+
+        .panel-logo { display: flex; align-items: center; gap: .6rem; margin-bottom: 3rem; text-decoration: none; }
+        .panel-logo .leaf {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--accent), var(--primary-light));
+            border-radius: 50% 12px 50% 12px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+            box-shadow: 0 0 16px rgba(76,199,106,.4);
+        }
+        .panel-logo .wordmark { font-family: 'Poppins', sans-serif; font-weight: 900; font-size: 1.4rem; color: #fff; line-height: 1; }
+        .panel-logo .wordmark em { color: var(--accent); font-style: normal; }
+
+        .panel-headline { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.65rem; color: #fff; line-height: 1.2; margin-bottom: .75rem; }
+        .panel-sub { color: rgba(255,255,255,.55); font-size: .88rem; line-height: 1.75; margin-bottom: 2.25rem; }
+
+        /* Reset steps on the panel */
+        .reset-steps { display: flex; flex-direction: column; gap: 0; }
+        .rs-item {
+            display: flex; gap: .85rem; align-items: flex-start;
+            padding: .75rem 0; border-top: 1px solid rgba(255,255,255,.07); position: relative;
+        }
+        .rs-item:first-child { border-top: 0; }
+        .rs-num {
+            width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Poppins', sans-serif; font-weight: 800; font-size: .8rem;
+            background: rgba(255,255,255,.1); color: rgba(255,255,255,.55);
+        }
+        .rs-num.active { background: var(--accent); color: #071a0d; }
+        .rs-num.done { background: rgba(76,199,106,.2); color: var(--accent); }
+        .rs-text strong { display: block; color: rgba(255,255,255,.88); font-size: .85rem; font-weight: 600; }
+        .rs-text span { color: rgba(255,255,255,.45); font-size: .77rem; line-height: 1.45; margin-top: .1rem; }
+        .rs-item.active .rs-text strong { color: var(--accent); }
+
+        .panel-footer-note {
+            margin-top: auto; padding-top: 2rem;
+            color: rgba(255,255,255,.3); font-size: .75rem; line-height: 1.5;
+        }
+        .panel-footer-note a { color: rgba(255,255,255,.45); text-decoration: none; }
+        .panel-footer-note a:hover { color: var(--accent); }
+
+        /* ── FORM AREA ── */
+        .auth-form-area {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 2.5rem 1.5rem; min-width: 0;
+        }
+        .auth-card {
+            width: 100%; max-width: 420px;
+            background: #fff; border-radius: 22px;
+            box-shadow: 0 10px 50px rgba(26,92,42,.1);
+            border: 1.5px solid rgba(26,92,42,.08);
+            padding: 2.5rem 2.25rem;
         }
 
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            background: #fff;
+        .step-badge {
+            display: inline-flex; align-items: center; gap: .4rem;
+            background: var(--light-green); color: var(--primary);
+            border-radius: 50px; padding: .28rem .85rem;
+            font-size: .71rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: .4px; margin-bottom: .9rem;
         }
+        .ac-icon { font-size: 2rem; margin-bottom: .35rem; }
+        .ac-title { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.5rem; color: #1a2e1e; margin-bottom: .35rem; }
+        .ac-sub { font-size: .88rem; color: var(--muted); margin-bottom: 1.85rem; line-height: 1.55; }
 
-        .container {
-            display: flex;
-            flex: 1;
-            width: 100%;
+        .auth-alert {
+            display: flex; align-items: flex-start; gap: .55rem;
+            padding: .75rem 1rem; border-radius: 10px; font-size: .85rem;
+            margin-bottom: 1.4rem; line-height: 1.5;
         }
+        .auth-alert.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .auth-alert.danger  { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
 
-        /* Left Form Section */
-        .form-section {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
+        .af-group { margin-bottom: 1.15rem; }
+        .af-label {
+            display: block; font-size: .71rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: .5px;
+            color: var(--primary); margin-bottom: .38rem;
         }
-
-        .form-box {
-            max-width: 400px;
-            width: 100%;
+        .af-input {
+            width: 100%; border: 1.5px solid rgba(26,92,42,.18); border-radius: 11px;
+            padding: .72rem 1rem; font-size: .9rem; color: #1a2e1e;
+            outline: none; transition: border .2s, box-shadow .2s;
+            font-family: 'Inter', sans-serif; background: #fff;
         }
+        .af-input:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(45,158,75,.12); }
+        .af-input.is-invalid { border-color: #e74c3c; }
+        .af-error { font-size: .75rem; color: #e74c3c; margin-top: .3rem; }
 
-        .form-box h2 {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: #0d1b2a;
-            text-align: center;
+        .btn-action {
+            width: 100%; height: 50px; border: none; border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: #fff; font-family: 'Poppins', sans-serif;
+            font-weight: 700; font-size: .97rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: .55rem;
+            transition: all .25s; margin-top: 1.4rem;
         }
+        .btn-action:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(26,92,42,.32); }
 
-        .form-box p {
-            color: #555;
-            font-size: 14px;
-            margin-bottom: 20px;
-            line-height: 1.6;
-            text-align: center;
-        }
+        .af-divider { display: flex; align-items: center; gap: .75rem; margin: 1.5rem 0; }
+        .af-divider::before, .af-divider::after { content: ''; flex: 1; height: 1px; background: rgba(26,92,42,.1); }
+        .af-divider span { font-size: .73rem; color: var(--muted); }
 
-        label {
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 6px;
-            display: block;
-        }
+        .af-switch { text-align: center; font-size: .87rem; color: var(--muted); }
+        .af-switch a { color: var(--primary); font-weight: 700; text-decoration: none; }
+        .af-switch a:hover { text-decoration: underline; }
 
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            /*margin-bottom: 15px;*/
-            font-size: 14px;
-        }
+        .auth-page-footer { text-align: center; margin-top: 1.75rem; font-size: .78rem; color: var(--muted); }
+        .auth-page-footer a { color: var(--muted); text-decoration: none; transition: color .2s; }
+        .auth-page-footer a:hover { color: var(--primary); }
+        .auth-page-footer .dot { margin: 0 .4rem; }
 
-        input:focus {
-            outline: none;
-            border-color: #017C76;
-            box-shadow: 0 0 4px rgba(1, 124, 118, 0.3);
-        }
-
-        .forgot {
-            display: block;
-            text-align: right;
-            font-size: 13px;
-            color: #017C76;
-            text-decoration: none;
-            margin-top: -10px;
-            margin-bottom: 20px;
-            cursor: pointer;
-        }
-
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            background: #0d1b2a;
-            color: #fff;
-            font-size: 15px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-
-        .btn:hover {
-            opacity: 0.9;
-        }
-
-        .divider {
-            margin: 20px 0;
-            border-top: 1px solid #ddd;
-        }
-
-        .signup {
-            text-align: center;
-            font-size: 14px;
-            margin-top: 20px;
-        }
-
-        .signup a {
-            color: #017C76;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        /* Logos Row */
-        .logo-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 30px;
-            gap: 15px;
-        }
-
-        .logo-row img {
-            height: 32px;
-            max-width: 80px;
-            object-fit: contain;
-            filter: grayscale(100%);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .logo-row img:hover {
-            filter: grayscale(0%);
-            transform: scale(1.05);
-        }
-
-        /* Popup */
-        .popup {
-            position: absolute;
-            background: #0d1b2a;
-            color: #fff;
-            padding: 14px 18px;
-            border-radius: 8px;
-            font-size: 13px;
-            line-height: 1.5;
-            max-width: 280px;
-            display: none;
-            z-index: 1000;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
-            white-space: pre-line;
-        }
-
-        /* Right Image Section */
-        .image-section {
-            flex: 1;
-            position: relative;
-            background: url("{{ asset('assets/images/afrk.jpg') }}") no-repeat center center/cover;
-            color: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .inspire-text {
-            font-size: 26px;
-            font-weight: bold;
-            background: rgba(0, 0, 0, 0.55);
-            padding: 15px 25px;
-            border-radius: 12px;
-            max-width: 80%;
-            line-height: 1.4;
-        }
-
-        /* Mobile Image */
-        .mobile-image {
-            display: none;
-            margin-bottom: 20px;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-        }
-
-        .mobile-image img {
-            width: 100%;
-            display: block;
-        }
-
-        /* Footer */
-        footer {
-            text-align: center;
-            font-size: 12px;
-            color: #777;
-            padding: 15px 0;
-            border-top: 1px solid #eee;
-        }
-
-        input.is-invalid {
-            border-color: #dc3545;
-            /*padding-right: calc(1.5em + .75rem);*/
-            /*background-image: url(data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e);*/
-            /*background-repeat: no-repeat;*/
-            /*background-position: right calc(.375em + .1875rem) center;*/
-            /*background-size: calc(.75em + .375rem) calc(.75em + .375rem);*/
-        }
-
-        .text-danger {
-            color: rgb(248, 66, 56) !important;
-            opacity: 1;
-        }
-
-        .form-control {
-            margin-bottom: 15px;
-        }
-
-        /* Responsive */
-        @media (max-width: 900px) {
-            body {
-                background: #f8f8f8;
+        /* ── MOBILE ── */
+        @media (max-width: 820px) {
+            body { flex-direction: column; }
+            .auth-panel {
+                width: 100%; flex-direction: row; align-items: center;
+                gap: 1rem; padding: 1.1rem 1.25rem; justify-content: flex-start;
             }
-
-            .container {
-                flex-direction: column;
-                max-width: 420px;
-                margin: 20px auto;
-            }
-
-            .image-section {
-                display: none;
-            }
-
-            .mobile-image {
-                display: block;
-            }
-
-            .form-section {
-                padding: 20px;
-                background: #fff;
-                border-radius: 16px;
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            }
-
-            .logo-row {
-                justify-content: center;
-                gap: 20px;
-            }
+            .panel-headline, .panel-sub, .reset-steps, .panel-footer-note { display: none; }
+            .panel-logo { margin-bottom: 0; }
+            .panel-logo .leaf { width: 34px; height: 34px; font-size: .95rem; }
+            .panel-logo .wordmark { font-size: 1.2rem; }
+            .auth-form-area { padding: 1.75rem 1rem; justify-content: flex-start; }
+            .auth-card { padding: 1.75rem 1.25rem; border-radius: 18px; }
+        }
+        @media (max-width: 480px) {
+            .auth-card { padding: 1.5rem 1rem; }
         }
     </style>
 </head>
-
 <body>
-    <div class="container">
-        <!-- Right Image -->
-        <div class="image-section">
-            <div class="inspire-text" id="inspire"></div>
+
+    <!-- LEFT PANEL -->
+    <div class="auth-panel">
+        <div class="panel-z">
+            <a href="{{ route('auth.LandingPage') }}" class="panel-logo">
+                <div class="leaf">🌿</div>
+                <div class="wordmark">Olives <em>BI</em></div>
+            </a>
+
+            <div class="panel-headline">Reset your<br>password securely.</div>
+            <p class="panel-sub">We'll send a one-time code to your registered phone number. Follow the three steps to set a new password.</p>
+
+            <div class="reset-steps">
+                <div class="rs-item active">
+                    <div class="rs-num active">1</div>
+                    <div class="rs-text">
+                        <strong>Enter Your Phone Number</strong>
+                        <span>We'll send an OTP to your registered number.</span>
+                    </div>
+                </div>
+                <div class="rs-item">
+                    <div class="rs-num">2</div>
+                    <div class="rs-text">
+                        <strong>Verify Your OTP</strong>
+                        <span>Enter the code and your new password.</span>
+                    </div>
+                </div>
+                <div class="rs-item">
+                    <div class="rs-num">3</div>
+                    <div class="rs-text">
+                        <strong>Sign In</strong>
+                        <span>Use your new password to access your account.</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Left Form -->
-        <div class="form-section">
-            <div class="form-box">
-                <!-- Mobile Image -->
-                <div class="mobile-image">
-                    <img src="{{ asset('asset/images/mob.png') }}" alt="Mobile Design">
-                </div>
-
-                @if (session()->has('status'))
-                    <div class="alert alert-success alert-dismissible fade show">
-                        <strong>{{ session('status') }}</strong>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                @endif
-
-                @if (session()->has('error'))
-                    <div class="alert alert-danger alert-dismissible fade show">
-                        <strong>{{ session('error') }}</strong>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                @endif
-
-                <!-- Login Form -->
-                <div id="login-form">
-                    <h2>Password Reset 🔑</h2>
-                    <p>Enter your phone number to receive an OTP.</p>
-
-                    <form action="{{ route('auth.sendUserOTP') }}" method="POST">
-                        @csrf
-
-                        <div class="form-control">
-                        <label>Phone Number</label>
-                        <input class="@error('phone') is-invalid @enderror" type="text" name="phone" placeholder="Enter your phone number" value="{{old('phone')}}" required>
-                        @error('phone')
-                        <div class="text-danger mt-1">{{ $message }}</div>
-                        @enderror
-                        </div>
-
-                        <div class="form-control">
-                        <a class="forgot" href="{{ route('auth.index') }}">Change of mind? Sign In</a>
-                        </div>
-
-                        <button type="submit" class="btn" id="send-otp">Send OTP</button>
-                    </form>
-                </div>
-
-                <div class="divider"></div>
-
-                <p class="signup">Developmental Partners</p>
-
-                <!-- Logos Row -->
-                <div class="logo-row">
-                    <img src="{{ asset('assets/images/au.png') }}" alt="African Union"
-                        data-popup="🌍 The African Union’s Agenda 2063 envisions a prosperous and well-governed Africa driven by its people.
-            ERMS PLUS directly supports this vision by strengthening internal revenue systems, advancing Goals 1, 2, 11, 12 and 18, and providing the sustainable resources needed to build the Africa we want.">
-
-                    <img src="{{ asset('assets/images/un.svg') }}" alt="United Nations"
-                        data-popup="  The United Nations Sustainable Development Goals call for an end to poverty, decent work and growth, strong institutions, and innovation.
-            Through resource mobilization, job creation, digital infrastructure, and transparent governance, ERMS PLUS contributes to achieving SDGs 1, 8, 9, 16, and 17.">
-
-                    <img src="{{ asset('assets/images/mel.png') }}" alt="Melchia"
-                        data-popup="🤝 Melchia serves as the operational partner of ERMS PLUS, ensuring that deployments across Africa are effectively managed and implemented.
-            They guarantee the system’s smooth day-to-day operations, bringing the vision of sustainable revenue management to life.">
-
-                    <img src="{{ asset('assets/images/acng.svg') }}" alt="Assets Circle"
-                        data-popup="💡 Assets Circle Network is the technology and innovation partner powering ERMS PLUS.
-            By driving Africa’s digital economy with cutting-edge solutions, they ensure the system remains future-ready, creating opportunities for stronger economies and new jobs across the continent.">
-                </div>
-
-            </div>
+        <div class="panel-footer-note">
+            <a href="{{ route('auth.LandingPage') }}">← Back to Home</a>
+            &nbsp;·&nbsp; © {{ date('Y') }} Olives BI
         </div>
     </div>
 
-    <footer>
-        <a href="https://ermsplus.africa" target="_blank" style="text-decoration: none; color: inherit;">
-            © {{ date('Y') }} <strong>ERMS PLUS</strong> — Built by Africans, for Africans.
-        </a>
-    </footer>
+    <!-- FORM AREA -->
+    <div class="auth-form-area">
+        <div class="auth-card">
+            <div class="step-badge"><i class="bi bi-phone"></i> Step 1 of 2</div>
+            <div class="ac-icon">🔑</div>
+            <div class="ac-title">Forgot password?</div>
+            <p class="ac-sub">Enter your registered phone number and we'll send you a one-time code to reset your password.</p>
 
-    <!-- JS Typing Effect + Reset Flow -->
-    <script>
-        const messages = [
-            "Streamlining Internal Generated Funds",
-            "Building the Africa We Want",
-            "Towards Agenda 2063 of the African Union"
-        ];
+            @if (session()->has('status'))
+                <div class="auth-alert success">
+                    <i class="bi bi-check-circle-fill" style="flex-shrink:0;margin-top:.1rem;"></i>
+                    {{ session('status') }}
+                </div>
+            @endif
 
-        let index = 0,
-            charIndex = 0;
-        const typingSpeed = 80,
-            eraseSpeed = 50,
-            delayBetween = 1500;
-        const inspireEl = document.getElementById("inspire");
+            @if (session()->has('error'))
+                <div class="auth-alert danger">
+                    <i class="bi bi-exclamation-circle-fill" style="flex-shrink:0;margin-top:.1rem;"></i>
+                    {{ session('error') }}
+                </div>
+            @endif
 
-        function typeEffect() {
-            if (charIndex < messages[index].length) {
-                inspireEl.textContent += messages[index].charAt(charIndex);
-                charIndex++;
-                setTimeout(typeEffect, typingSpeed);
-            } else {
-                setTimeout(eraseEffect, delayBetween);
-            }
-        }
+            <form action="{{ route('auth.sendUserOTP') }}" method="POST">
+                @csrf
 
-        function eraseEffect() {
-            if (charIndex > 0) {
-                inspireEl.textContent = messages[index].substring(0, charIndex - 1);
-                charIndex--;
-                setTimeout(eraseEffect, eraseSpeed);
-            } else {
-                index = (index + 1) % messages.length;
-                setTimeout(typeEffect, typingSpeed);
-            }
-        }
+                <div class="af-group">
+                    <label class="af-label" for="phone">Phone Number</label>
+                    <input class="af-input @error('phone') is-invalid @enderror"
+                           id="phone" type="text" name="phone"
+                           placeholder="e.g. +233 20 000 0000"
+                           value="{{ old('phone') }}" required>
+                    @error('phone')
+                        <div class="af-error"><i class="bi bi-exclamation-circle"></i> {{ $message }}</div>
+                    @enderror
+                </div>
 
-        document.addEventListener("DOMContentLoaded", () => {
-            if (inspireEl) typeEffect();
-        });
+                <button type="submit" class="btn-action">
+                    <i class="bi bi-send-fill"></i> Send OTP Code
+                </button>
+            </form>
 
-        // Logo Popups
-        const logos = document.querySelectorAll(".logo-row img");
-        const popup = document.createElement("div");
-        popup.classList.add("popup");
-        document.body.appendChild(popup);
+            <div class="af-divider"><span>Remembered it?</span></div>
 
-        logos.forEach(logo => {
-            logo.addEventListener("mouseenter", () => {
-                popup.textContent = logo.getAttribute("data-popup");
-                popup.style.display = "block";
-            });
-            logo.addEventListener("mousemove", e => {
-                popup.style.top = e.pageY - popup.offsetHeight - 15 + "px";
-                popup.style.left = e.pageX - popup.offsetWidth / 2 + "px";
-            });
-            logo.addEventListener("mouseleave", () => {
-                popup.style.display = "none";
-            });
-        });
-    </script>
+            <div class="af-switch">
+                <a href="{{ route('auth.index') }}"><i class="bi bi-arrow-left"></i> Back to Sign In</a>
+            </div>
+        </div>
+
+        <div class="auth-page-footer">
+            <a href="{{ route('auth.LandingPage') }}">Home</a>
+            <span class="dot">·</span>
+            <a href="{{ route('auth.register') }}">Create Account</a>
+            <span class="dot">·</span>
+            <a href="{{ route('locality.check') }}">Check Locality</a>
+        </div>
+    </div>
+
 </body>
-
 </html>

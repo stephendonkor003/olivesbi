@@ -15,6 +15,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class GenerateBusinessBillsJob implements ShouldQueue
 {
@@ -71,9 +72,16 @@ class GenerateBusinessBillsJob implements ShouldQueue
                 }
             }
 
+            $businesses = Business::with(['polygon.block.division', 'assembly'])
+                ->whereIn('id', $this->businessIds)
+                ->where('assembly_code', $this->assemblyCode)
+                ->get();
+
+            $businessUuids = $businesses->pluck('uuid')->filter()->values();
+
             $arrearsData = DB::table('bills')
                 ->select('business_id', DB::raw('SUM(amount) as total_bills'))
-                ->whereIn('business_id', $this->businessIds)
+                ->whereIn('business_id', $businessUuids)
                 ->groupBy('business_id')
                 ->get()
                 ->keyBy('business_id');
@@ -81,7 +89,7 @@ class GenerateBusinessBillsJob implements ShouldQueue
             $paymentsData = DB::table('payments')
                 ->select('bills.business_id', DB::raw('SUM(payments.amount) as total_payments'))
                 ->join('bills', 'payments.bills_id', '=', 'bills.bills_id')
-                ->whereIn('bills.business_id', $this->businessIds)
+                ->whereIn('bills.business_id', $businessUuids)
                 ->where(function ($query) {
                     $query->where('payments.payment_mode', '!=', 'momo')
                         ->orWhere(function ($query) {
@@ -92,11 +100,6 @@ class GenerateBusinessBillsJob implements ShouldQueue
                 ->groupBy('bills.business_id')
                 ->get()
                 ->keyBy('business_id');
-
-            $businesses = Business::with(['polygon.block.division', 'assembly'])
-                ->whereIn('id', $this->businessIds)
-                ->where('assembly_code', $this->assemblyCode)
-                ->get();
 
             $billsToInsert = [];
             $billsCreated = 0;
@@ -137,8 +140,9 @@ class GenerateBusinessBillsJob implements ShouldQueue
 
                 $discountedBill = max(0, $yearlyBill - $applicableDiscount);
 
-                $totalBills = $arrearsData[$business->id]->total_bills ?? 0;
-                $totalPayments = $paymentsData[$business->id]->total_payments ?? 0;
+                $businessKey = $business->uuid;
+                $totalBills = $arrearsData[$businessKey]->total_bills ?? 0;
+                $totalPayments = $paymentsData[$businessKey]->total_payments ?? 0;
                 $arrears = $totalBills - $totalPayments;
 
                 do {
@@ -151,7 +155,8 @@ class GenerateBusinessBillsJob implements ShouldQueue
                 } while (Bill::where('bills_id', $billID)->exists());
 
                 $billsToInsert[] = [
-                    'business_id' => $business->id,
+                    'uuid' => (string) Str::uuid(),
+                    'business_id' => $businessKey,
                     'assembly_code' => $this->assemblyCode,
                     'bills_id' => $billID,
                     'bills_year' => $this->billYear,

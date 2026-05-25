@@ -52,7 +52,7 @@
                     @endif
 
                     <div class="card-body">
-                        <form class="row g-3 needs-validation" action="{{ route('assembly.update', $assembly->id) }}"
+                        <form class="row g-3 needs-validation" action="{{ route('assembly.update', $assembly) }}"
                             method="POST" enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
@@ -407,7 +407,7 @@
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
-                attribution: '© OpenStreetMap contributors'
+                attribution: 'Â© OpenStreetMap contributors'
             }).addTo(map);
 
             L.control.layers(MapController.getBaseMaps()).addTo(map);

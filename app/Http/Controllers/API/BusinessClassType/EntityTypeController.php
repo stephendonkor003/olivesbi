@@ -18,9 +18,9 @@ class EntityTypeController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($uuid)
     {
-        $entityType = BusinessClassType::where('id', $id)->first();
+        $entityType = BusinessClassType::whereUuidOrId($uuid)->first();
 
         if (empty($entityType)) {
             return response()->json([

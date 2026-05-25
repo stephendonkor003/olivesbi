@@ -10,6 +10,7 @@ use App\Http\Requests\API\ChangePassword\SendOTPRequest;
 use App\Jobs\OTP\SendPasswordChangeOTPSMS;
 use App\Models\OTP;
 use App\Models\User;
+use App\Support\OlivesCardNumber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -19,36 +20,24 @@ class LoginController extends Controller
     public function index(LoginRequest $request)
     {
         try {
-            $result = filter_var($request->validated('username'), FILTER_VALIDATE_EMAIL);
-
-            if (empty($result)) {
-                if (! auth()->attempt([
-                    'phone' => $request->validated('username'),
-                    'password' => $request->validated('password'),
-                    'status' => 'Active',
-                ])) {
-                    throw ValidationException::withMessages([
-                        'username' => 'Your provided credentials could not be verified.',
-                    ]);
-                }
-            }
-
-            if (! empty($result)) {
-                if (! auth()->attempt([
-                    'email' => $request->validated('username'),
-                    'password' => $request->validated('password'),
-                    'status' => 'Active',
-                ])) {
-                    throw ValidationException::withMessages([
-                        'username' => 'Your provided credentials could not be verified.',
-                    ]);
-                }
-            }
+            $identifier = trim($request->validated('username'));
+            $normalizedCardNumber = OlivesCardNumber::normalize($identifier);
 
             $user = User::with(['customer'])
-                ->where('phone', $request->validated('username'))
-                ->orWhere('email', $request->validated('username'))
+                ->where('status', 'Active')
+                ->where(function ($query) use ($identifier, $normalizedCardNumber) {
+                    $query->where('phone', $identifier)
+                        ->orWhere('email', $identifier)
+                        ->orWhere('erms_id', $identifier)
+                        ->orWhere('olives_card_number', $normalizedCardNumber);
+                })
                 ->first();
+
+            if (! $user || ! Hash::check($request->validated('password'), $user->password)) {
+                throw ValidationException::withMessages([
+                    'username' => 'Your provided credentials could not be verified.',
+                ]);
+            }
 
             session()->regenerate();
 

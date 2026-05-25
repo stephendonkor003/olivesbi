@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasUuid;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class PropertyRevenue extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
 
     protected $table = 'property_class_revenues';
 

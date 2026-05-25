@@ -63,11 +63,11 @@ class UserController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($uuid)
     {
         $user = User::query()
             ->with(['assembly'])
-            ->where('id', $id)
+            ->whereUuidOrId($uuid)
             ->first();
 
         if (empty($user)) {
@@ -82,13 +82,13 @@ class UserController extends Controller
         ]);
     }
 
-    public function update(UpdateUserRequest $request, $id)
+    public function update(UpdateUserRequest $request, $uuid)
     {
         $data = $request->validated();
 
         $user = User::query()
             ->with(['assembly'])
-            ->where('id', $id)
+            ->whereUuidOrId($uuid)
             ->first();
 
         if (empty($user)) {

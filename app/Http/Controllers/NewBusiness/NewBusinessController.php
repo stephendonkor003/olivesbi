@@ -15,6 +15,7 @@ use App\Models\ItemDescription;
 use App\Models\Polygon;
 use App\Models\RevenueStream;
 use App\Models\RevenueStreamType;
+use App\Support\GlobalLocation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -56,9 +57,9 @@ class NewBusinessController extends Controller
                             </div>
                             <div class="dropdown-menu dropdown-menu-end">
                                 <div class="py-2">
-                                    <a class="dropdown-item" href="'.route('new-businesses.show', $business->id).'">View</a>
-                                    <a class="dropdown-item" href="'.route('new-businesses.edit', $business->id).'">Edit</a>
-                                    <a class="dropdown-item" href="'.route('businesses.assignRevenueStream', $business->id).'">Assign Revenue Stream</a>
+                                    <a class="dropdown-item" href="'.route('new-businesses.show', $business).'">View</a>
+                                    <a class="dropdown-item" href="'.route('new-businesses.edit', $business).'">Edit</a>
+                                    <a class="dropdown-item" href="'.route('businesses.assignRevenueStream', $business).'">Assign Revenue Stream</a>
                                 </div>
                             </div>
                         </div>
@@ -131,20 +132,27 @@ class NewBusinessController extends Controller
             throw ValidationException::withMessages(['assembly_code' => 'The selected assembly code is invalid']);
         }
 
-        $division = Division::where('assembly_code', $data['assembly_code'])->find($data['division_id']);
+        $division = Division::where('assembly_code', $data['assembly_code'])
+            ->whereUuidOrId($data['division_id'])
+            ->first();
 
         if (! $division) {
             throw ValidationException::withMessages(['division_id' => 'The selected division id is invalid']);
         }
 
+        $data['division_id'] = $division->id;
+
         $block = Block::query()
             ->where('assembly_code', $data['assembly_code'])
             ->where('division_id', $data['division_id'])
-            ->find($data['block_id']);
+            ->whereUuidOrId($data['block_id'])
+            ->first();
 
         if (! $block) {
             throw ValidationException::withMessages(['block_id' => 'The selected block id is invalid']);
         }
+
+        $data['block_id'] = $block->id;
 
         try {
             $propertyId = app(GeneratePropertyIDAction::class)
@@ -186,6 +194,11 @@ class NewBusinessController extends Controller
         // Create polygon
         $polygon = Polygon::create($polygonData);
 
+        $globalLocation = GlobalLocation::from(
+            $data,
+            $data['address'] ?? $data['digitaladdress'] ?? $data['location'] ?? $data['street_name'] ?? null
+        );
+
         $businessData = [
             'erms_id' => $propertyId,
             'account_no' => $account_no,
@@ -198,6 +211,7 @@ class NewBusinessController extends Controller
             'quantity' => 0,
             'location' => $data['location'] ?? null,
             'street_name' => $data['street_name'] ?? null,
+            ...$globalLocation,
             'phone_no' => $data['phone_no'] ?? null,
             'address' => $data['address'] ?? null,
             'email' => $data['email'] ?? null,
@@ -279,6 +293,28 @@ class NewBusinessController extends Controller
             $data['assembly_code'] = $request->user()->assembly_code;
         }
 
+        $division = Division::where('assembly_code', $data['assembly_code'])
+            ->whereUuidOrId($data['division_id'])
+            ->first();
+
+        if (! $division) {
+            throw ValidationException::withMessages(['division_id' => 'The selected division id is invalid']);
+        }
+
+        $data['division_id'] = $division->id;
+
+        $block = Block::query()
+            ->where('assembly_code', $data['assembly_code'])
+            ->where('division_id', $data['division_id'])
+            ->whereUuidOrId($data['block_id'])
+            ->first();
+
+        if (! $block) {
+            throw ValidationException::withMessages(['block_id' => 'The selected block id is invalid']);
+        }
+
+        $data['block_id'] = $block->id;
+
         $polygonData = [
             'building' => json_decode($request->geofence, true),
             'block_id' => $data['block_id'],
@@ -289,6 +325,11 @@ class NewBusinessController extends Controller
             'assembly_code' => $data['assembly_code'],
         ];
 
+        $globalLocation = GlobalLocation::from(
+            $data,
+            $data['address'] ?? $data['digitaladdress'] ?? $data['location'] ?? $data['street_name'] ?? null
+        );
+
         $businessData = [
             'business_name' => $data['business_name'] ?? null,
             'registration_no' => $data['registration_no'] ?? null,
@@ -298,6 +339,7 @@ class NewBusinessController extends Controller
             'quantity' => 0,
             'location' => $data['location'] ?? null,
             'street_name' => $data['street_name'] ?? null,
+            ...$globalLocation,
             'phone_no' => $data['phone_no'] ?? null,
             'address' => $data['address'] ?? null,
             'email' => $data['email'] ?? null,
@@ -374,8 +416,8 @@ class NewBusinessController extends Controller
 
     public function assignRevenueStreamStore(Request $request)
     {
-        $business = Business::where('id', $request->query('business_id'))->first();
-        $revenueStreamsId = $request->query('revenue_stream_id') ?? null;
+        $business = Business::whereUuidOrId($request->query('business_id'))->first();
+        $revenueStreamsId = RevenueStream::whereUuidOrId($request->query('revenue_stream_id'))->value('id');
 
         if ($business) {
             $business->update(['buss_rev_id' => $revenueStreamsId]);
@@ -393,8 +435,8 @@ class NewBusinessController extends Controller
         $paymentsSubquery = DB::table('payments')
             ->join('bills', 'payments.bills_id', '=', 'bills.bills_id')
             ->select('bills.business_id', DB::raw('SUM(CASE
-                WHEN payments.payment_mode = "momo" AND payments.transaction_status = "Success" THEN payments.amount
-                WHEN payments.payment_mode != "momo" THEN payments.amount
+                WHEN payments.payment_mode = \'momo\' AND payments.transaction_status = \'Success\' THEN payments.amount
+                WHEN payments.payment_mode != \'momo\' THEN payments.amount
                 ELSE 0
             END) as total_payments'))
             ->groupBy('bills.business_id');
@@ -403,8 +445,8 @@ class NewBusinessController extends Controller
             ->join('assemblies', 'businesses.assembly_code', '=', 'assemblies.assembly_code')
             ->join('polygons', 'businesses.polygon_id', '=', 'polygons.id')
             ->leftJoin('entity_owners', 'businesses.owner_id', '=', 'entity_owners.erms_id')
-            ->leftJoinSub($billsSubquery, 'bills_sum', 'businesses.id', '=', 'bills_sum.business_id')
-            ->leftJoinSub($paymentsSubquery, 'payments_sum', 'businesses.id', '=', 'payments_sum.business_id')
+            ->leftJoinSub($billsSubquery, 'bills_sum', 'businesses.uuid', '=', 'bills_sum.business_id')
+            ->leftJoinSub($paymentsSubquery, 'payments_sum', 'businesses.uuid', '=', 'payments_sum.business_id')
             ->select([
                 'polygons.cntr_y_coord as latitude',
                 'polygons.cntr_x_coord as longitude',

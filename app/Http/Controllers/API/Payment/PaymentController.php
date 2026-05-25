@@ -139,9 +139,9 @@ class PaymentController extends Controller
         }
     }
 
-    public function show($id)
+    public function show($uuid)
     {
-        $payment = Payment::where('id', $id)
+        $payment = Payment::whereUuidOrId($uuid)
             ->with(['assembly', 'bill'])
             ->first();
 
@@ -157,10 +157,13 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function customerPayment($id)
+    public function customerPayment($uuid)
     {
-        $customer = Owner::where('erms_id', $id)
-            ->orWhere('id', $id)
+        $customer = Owner::query()
+            ->where(function ($query) use ($uuid) {
+                $query->whereUuidOrId($uuid)
+                    ->orWhere('erms_id', $uuid);
+            })
             ->first();
 
         if (empty($customer)) {
@@ -255,7 +258,7 @@ class PaymentController extends Controller
 
     public function confirmPayment(ConfirmPaymentRequest $request)
     {
-        $payment = Payment::where('id', $request->input('payment_id'))->first();
+        $payment = Payment::whereUuidOrId($request->input('payment_id'))->first();
 
         if (empty($payment)) {
             return response()->json([

@@ -2,8 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasUuid;
+
 class Role extends \Spatie\Permission\Models\Role
 {
+    use HasUuid;
+
     protected $casts = [
         'active' => 'boolean',
     ];

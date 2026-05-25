@@ -248,7 +248,7 @@
                                                                                     class="dropdown-menu dropdown-menu-end">
                                                                                     <div class="py-2">
                                                                                         <a class="dropdown-item"
-                                                                                            href="{{ route('task-assignments.updateStatus', ['id' => $block->id, 'block_id' => $block->block_id]) }}">Mark
+                                                                                            href="{{ route('task-assignments.updateStatus', ['id' => $block->assignment_uuid, 'block_id' => $block->block_uuid]) }}">Mark
                                                                                             As Done
                                                                                         </a>
                                                                                     </div>

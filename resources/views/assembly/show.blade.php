@@ -38,7 +38,7 @@
                 <div class="card">
 
                     <div class="card-body">
-                        <form class="row g-3 needs-validation" action="{{ route('assembly.update', $assembly->id) }}"
+                        <form class="row g-3 needs-validation" action="{{ route('assembly.update', $assembly) }}"
                             method="POST">
                             @csrf
 
@@ -174,7 +174,7 @@
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
-            attribution: '© OpenStreetMap contributors'
+            attribution: 'Â© OpenStreetMap contributors'
         }).addTo(map);
 
         const rawData = @json($assembly->geo_coordinate);

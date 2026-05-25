@@ -22,9 +22,9 @@ class ZoneController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($uuid)
     {
-        $zone = Zone::where('id', $id)->first();
+        $zone = Zone::whereUuidOrId($uuid)->first();
 
         if (empty($zone)) {
             return response()->json([

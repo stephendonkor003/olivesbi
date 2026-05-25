@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Business;
 
+use App\Support\GlobalLocation;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateBusinessRequest extends FormRequest
@@ -29,13 +30,14 @@ class UpdateBusinessRequest extends FormRequest
             'digitaladdress' => 'nullable|string',
             'location' => 'required|string',
             'street_name' => 'nullable|string',
+            ...GlobalLocation::rules(),
             'phone_no' => 'required|string|max:15',
             'address' => 'nullable|string',
             'email' => 'nullable|email',
             'owner_id' => 'required|string',
             'assembly_code' => 'required|string|exists:assemblies,assembly_code',
-            'division_id' => 'required|exists:divisions,id',
-            'block_id' => 'required|exists:blocks,id',
+            'division_id' => 'required|string',
+            'block_id' => 'required|string',
             'longitude' => 'required|string',
             'latitude' => 'required|string',
         ];

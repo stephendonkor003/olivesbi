@@ -13,9 +13,9 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function agentPayment($id)
+    public function agentPayment($uuid)
     {
-        $agent = User::where('id', $id)
+        $agent = User::whereUuidOrId($uuid)
             ->where('access_level', 'Assembly_Agent')
             ->first();
 
@@ -94,9 +94,9 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function agentTask(Request $request, $id)
+    public function agentTask(Request $request, $uuid)
     {
-        $agent = User::where('id', $id)
+        $agent = User::whereUuidOrId($uuid)
             ->where('access_level', 'Assembly_Agent')
             ->first();
 
@@ -138,12 +138,12 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function dashboardData($id)
+    public function dashboardData($uuid)
     {
         $now = Carbon::now();
         $startOfYear = $now->copy()->firstOfYear();
 
-        $agent = User::where('id', $id)
+        $agent = User::whereUuidOrId($uuid)
             ->where('access_level', 'Assembly_Agent')
             ->first();
 
@@ -161,7 +161,7 @@ class DashboardController extends Controller
             ->count();
 
         $totalBillsAmount = DB::table('bills')
-            ->join('properties', 'bills.property_id', '=', 'properties.id')
+            ->join('properties', 'bills.property_id', '=', 'properties.uuid')
             ->where('properties.created_by', $agent->id)
             ->sum('bills.amount');
 
@@ -195,7 +195,7 @@ class DashboardController extends Controller
 
         $paymentsByType = DB::table('payments')
             ->join('bills', 'payments.bills_id', '=', 'bills.bills_id')
-            ->join('properties', 'bills.property_id', '=', 'properties.id')
+            ->join('properties', 'bills.property_id', '=', 'properties.uuid')
             ->join('revenue_streams', 'properties.prop_rev_id', '=', 'revenue_streams.id')
             ->join('zones', 'revenue_streams.zone_type_id', '=', 'zones.id')
             ->where('transaction_status', 'Success')
@@ -221,12 +221,12 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function customerDashboardData($id)
+    public function customerDashboardData($uuid)
     {
         $now = Carbon::now();
         $startOfYear = $now->copy()->firstOfYear();
 
-        $customer = User::where('id', $id)
+        $customer = User::whereUuidOrId($uuid)
             ->where('access_level', 'customer')
             ->first();
 
@@ -240,7 +240,7 @@ class DashboardController extends Controller
 
         // Get latest bills with their total payments
         $currentBillData = DB::table('bills')
-            ->join('properties', 'bills.property_id', '=', 'properties.id')
+            ->join('properties', 'bills.property_id', '=', 'properties.uuid')
             ->leftJoin('payments', function ($join) {
                 $join->on('payments.bills_id', '=', 'bills.bills_id')
                     ->where(function ($q) {
@@ -280,7 +280,7 @@ class DashboardController extends Controller
         // Get total payments count and amount for all bills
         $paymentsQuery = DB::table('payments')
             ->join('bills', 'payments.bills_id', '=', 'bills.bills_id')
-            ->join('properties', 'bills.property_id', '=', 'properties.id')
+            ->join('properties', 'bills.property_id', '=', 'properties.uuid')
             ->where(function ($q) {
                 $q->where('payments.payment_mode', '!=', 'momo')
                     ->orWhere(function ($q2) {
@@ -293,7 +293,7 @@ class DashboardController extends Controller
         $totalAmountPaid = $paymentsQuery->sum('payments.amount');
 
         $monthlyBills = DB::table('bills')
-            ->join('properties', 'bills.property_id', '=', 'properties.id')
+            ->join('properties', 'bills.property_id', '=', 'properties.uuid')
             ->where('properties.owner_id', $customer->erms_id)
             ->whereBetween('bills.created_at', [$startOfYear, $now])
             ->select(
@@ -305,7 +305,7 @@ class DashboardController extends Controller
 
         $monthlyPayments = DB::table('payments')
             ->join('bills', 'payments.bills_id', '=', 'bills.bills_id')
-            ->join('properties', 'bills.property_id', '=', 'properties.id')
+            ->join('properties', 'bills.property_id', '=', 'properties.uuid')
             ->where('properties.owner_id', $customer->erms_id)
             ->whereBetween('payments.created_at', [$startOfYear, $now])
             ->where('transaction_status', 'Success')

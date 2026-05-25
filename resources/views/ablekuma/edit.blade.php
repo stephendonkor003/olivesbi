@@ -21,7 +21,7 @@
             <div class="col-xl-12 active-p">
                 <div class="card">
                     <div class="card-body px-0">
-                        <form action="{{ route('ablekuma.update', $payment->id) }}" method="POST">
+                        <form action="{{ route('ablekuma.update', $payment) }}" method="POST">
                             @csrf
                             @method('PUT')
                             <div class="row mb-3">

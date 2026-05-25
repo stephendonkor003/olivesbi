@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasUuid;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class Assembly extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
 
     protected $table = 'assemblies';
 
@@ -24,6 +26,9 @@ class Assembly extends Model
         'address',
         'phone',
         'assembly_category',
+        'currency_code',
+        'currency_symbol',
+        'currency_name',
         'bank_name',
         'bank_number',
         'bank_branch',

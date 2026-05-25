@@ -82,10 +82,10 @@ class PropertyReportController extends Controller
                                 ->join($level['table'], 'customers.'.$level['id'], '=', $level['table'].'.id')
                                 ->select(
                                     $level['table'].'.'.$level['column'].' as name',
-                                    $level['table'].'.id as id',
+                                    $level['table'].'.uuid as uuid',
                                     DB::raw('COUNT(*) as total_customer')
                                 )
-                                ->groupBy($level['table'].'.'.$level['column'])
+                                ->groupBy($level['table'].'.'.$level['column'], $level['table'].'.uuid')
                                 ->get();
 
                             return datatables()->of($data)
@@ -94,7 +94,7 @@ class PropertyReportController extends Controller
                                     return $row->name;
                                 })
                                 ->editColumn('link', function ($row) use ($request) {
-                                    return '<a href="'.route('customers.index', ['param' => $request->name, 'param_id' => $row->id]).'" class="btn btn-success btn-sm" target="_blank">View Details</a>';
+                                    return '<a href="'.route('citizens.index', ['param' => $request->name, 'param_uuid' => $row->uuid]).'" class="btn btn-success btn-sm" target="_blank">View Details</a>';
                                 })
                                 ->rawColumns(['link'])
                                 ->make(true);

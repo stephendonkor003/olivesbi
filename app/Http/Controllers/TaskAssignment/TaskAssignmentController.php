@@ -234,8 +234,8 @@ class TaskAssignmentController extends Controller
                 $blockEntry = collect($blockData)->firstWhere('block_id', $block->id);
 
                 $result = new stdClass;
-                $result->id = $taskAssignment->id;
-                $result->block_id = $blockEntry['block_id'];
+                $result->assignment_uuid = $taskAssignment->uuid;
+                $result->block_uuid = $block->uuid;
                 $result->block_code = $block->code;
                 $result->block_name = $block->name;
                 $result->assembly = $block->assembly->name ?? '';
@@ -273,11 +273,15 @@ class TaskAssignmentController extends Controller
 
     public function updateStatus(Request $request)
     {
-        $taskAssignment = TaskAssignment::where('id', $request->id)->first();
+        $taskAssignment = TaskAssignment::whereUuidOrId($request->id)->firstOrFail();
+        $blockId = Block::whereUuidOrId($request->block_id)->value('id');
+
+        abort_if(! $blockId, 404);
+
         $blockData = $taskAssignment->block_data;
 
         $statusUpdate = [
-            $request->block_id => 'Completed',
+            $blockId => 'Completed',
         ];
 
         // Update the block_data

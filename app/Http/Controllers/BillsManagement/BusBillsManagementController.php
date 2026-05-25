@@ -257,7 +257,7 @@ class BusBillsManagementController extends Controller
             $userId = $request->user()->id;
 
             $businessIds = Business::where('assembly_code', $assemblyCode)
-                ->whereNotIn('id', function ($query) use ($billYear) {
+                ->whereNotIn('uuid', function ($query) use ($billYear) {
                     $query->select('business_id')
                         ->from('bills')
                         ->whereNotNull('business_id')
@@ -407,7 +407,7 @@ class BusBillsManagementController extends Controller
             ->when(! empty($request->user()->assembly_code), function ($query) use ($request) {
                 $query->where('assembly_code', $request->user()->assembly_code);
             })
-            ->whereNotIn('id', function ($query) {
+            ->whereNotIn('uuid', function ($query) {
                 $query->select('business_id')
                     ->from('bills')
                     ->whereNotNull('business_id')
@@ -440,7 +440,7 @@ class BusBillsManagementController extends Controller
                         $q->where('id', $request->division_id);
                     });
                 })
-                ->whereNotIn('id', function ($query) use ($request) {
+                ->whereNotIn('uuid', function ($query) use ($request) {
                     $query->select('business_id')
                         ->from('bills')
                         ->whereNotNull('business_id')
@@ -512,7 +512,7 @@ class BusBillsManagementController extends Controller
             ->when(! empty($request->user()->assembly_code), function ($query) use ($request) {
                 $query->where('assembly_code', $request->user()->assembly_code);
             })
-            ->whereNotIn('id', function ($query) {
+            ->whereNotIn('uuid', function ($query) {
                 $query->select('business_id')
                     ->from('bills')
                     ->whereNotNull('business_id')
@@ -545,7 +545,7 @@ class BusBillsManagementController extends Controller
                         $q->where('id', $request->block_id);
                     });
                 })
-                ->whereNotIn('id', function ($query) use ($request) {
+                ->whereNotIn('uuid', function ($query) use ($request) {
                     $query->select('business_id')
                         ->from('bills')
                         ->whereNotNull('business_id')
@@ -610,7 +610,7 @@ class BusBillsManagementController extends Controller
             ->selectRaw("CONCAT(entity_owners.fname, ' ', entity_owners.lname, ' (', businesses.erms_id, ')') AS name")
             ->join('entity_owners', 'businesses.owner_id', '=', 'entity_owners.erms_id')
             ->where('businesses.assembly_code', $request->assembly_code)
-            ->whereNotIn('businesses.id', function ($query) use ($billYear) {
+            ->whereNotIn('businesses.uuid', function ($query) use ($billYear) {
                 $query->select('business_id')
                     ->from('bills')
                     ->whereNotNull('business_id')
@@ -642,7 +642,7 @@ class BusBillsManagementController extends Controller
             ->when(! empty($request->user()->assembly_code), function ($query) use ($user) {
                 $query->where('assembly_code', $user->assembly_code);
             })
-            ->whereNotIn('id', function ($query) {
+            ->whereNotIn('uuid', function ($query) {
                 $query->select('business_id')
                     ->from('bills')
                     ->whereNotNull('business_id')
@@ -682,7 +682,7 @@ class BusBillsManagementController extends Controller
                 $allBusinessIds = DB::table('businesses')
                     ->select('id')
                     ->where('assembly_code', $assemblyCode)
-                    ->whereNotIn('id', function ($query) use ($billYear) {
+                    ->whereNotIn('uuid', function ($query) use ($billYear) {
                         $query->select('business_id')
                             ->from('bills')
                             ->whereNotNull('business_id')
@@ -772,10 +772,10 @@ class BusBillsManagementController extends Controller
                 $discountedBill = max(0, $finalAmount - $applicableDiscount);
 
                 // Calculate arrears
-                $totalBills = Bill::where('business_id', $business->id)->sum('amount');
+                $totalBills = Bill::where('business_id', $business->uuid)->sum('amount');
 
                 $totalPayments = Payment::whereIn('bills_id', function ($query) use ($business) {
-                    $query->select('bills_id')->from('bills')->where('business_id', $business->id);
+                    $query->select('bills_id')->from('bills')->where('business_id', $business->uuid);
                 })
                     ->where('transaction_status', 'Success')
                     ->sum('amount');

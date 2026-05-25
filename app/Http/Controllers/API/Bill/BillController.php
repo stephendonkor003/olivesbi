@@ -80,18 +80,19 @@ class BillController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($uuid)
     {
-        $bill = Bill::where('id', $id)
-            ->with([
+        $bill = Bill::with([
                 'property.polygon.block.division',
                 'property.polygon:id,cntr_x_coord,cntr_y_coord,block_id',
                 'business.polygon:id,cntr_x_coord,cntr_y_coord,block_id',
                 'assembly',
                 'payments',
             ])
-            ->orWhere('bills_id', $id)
-            ->orWhere('id', $id)
+            ->where(function ($query) use ($uuid) {
+                $query->whereUuidOrId($uuid)
+                    ->orWhere('bills_id', $uuid);
+            })
             ->first();
 
         if ($bill) {
@@ -116,10 +117,13 @@ class BillController extends Controller
         ]);
     }
 
-    public function customerBill($id)
+    public function customerBill($uuid)
     {
-        $customer = Owner::where('erms_id', $id)
-            ->orWhere('id', $id)
+        $customer = Owner::query()
+            ->where(function ($query) use ($uuid) {
+                $query->whereUuidOrId($uuid)
+                    ->orWhere('erms_id', $uuid);
+            })
             ->first();
 
         if (empty($customer)) {
@@ -169,10 +173,13 @@ class BillController extends Controller
         ]);
     }
 
-    public function pendingBill($id)
+    public function pendingBill($uuid)
     {
-        $customer = Owner::where('erms_id', $id)
-            ->orWhere('id', $id)
+        $customer = Owner::query()
+            ->where(function ($query) use ($uuid) {
+                $query->whereUuidOrId($uuid)
+                    ->orWhere('erms_id', $uuid);
+            })
             ->first();
 
         if (empty($customer)) {

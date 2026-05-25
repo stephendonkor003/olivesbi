@@ -331,7 +331,7 @@
                                         <td>{{ $stream->min_amount ?? '0.00' }}</td>
                                         <td>{{ $stream->assembly->name ?? '-' }}</td>
                                         <td>
-                                            <a href="{{ route('properties.assignRevenue', ['property_id' => $property->id, 'revenue_stream_id' => $stream->id]) }}"
+                                            <a href="{{ route('properties.assignRevenue', ['property_id' => $property->uuid, 'revenue_stream_id' => $stream->uuid]) }}"
                                                 class="btn btn-success btn-sm ms-2">Assign</a>
                                         </td>
                                     </tr>

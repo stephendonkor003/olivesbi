@@ -20,7 +20,7 @@
                             </div>
                         @endif
 
-                        <form method="POST" action="{{ route('ablekuma-north-payments.process-payment', $payment->id) }}">
+                        <form method="POST" action="{{ route('ablekuma-north-payments.process-payment', $payment) }}">
                             @csrf
                             <div class="row">
                                 <div class="col-md-4">

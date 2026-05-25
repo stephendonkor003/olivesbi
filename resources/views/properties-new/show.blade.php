@@ -452,6 +452,38 @@
                                                         </div>
                                                     </div>
                                                     <div class="col-sm-6 mb-3">
+                                                        <label class="form-label">Full Address</label>
+                                                        <input type="text" class="form-control" value="{{ $property->address_line ?? 'N/A' }}" readonly>
+                                                    </div>
+                                                    <div class="col-sm-3 mb-3">
+                                                        <label class="form-label">Continent</label>
+                                                        <input type="text" class="form-control" value="{{ $property->continent ?? 'N/A' }}" readonly>
+                                                    </div>
+                                                    <div class="col-sm-3 mb-3">
+                                                        <label class="form-label">Country</label>
+                                                        <input type="text" class="form-control" value="{{ $property->country ?? 'N/A' }}" readonly>
+                                                    </div>
+                                                    <div class="col-sm-3 mb-3">
+                                                        <label class="form-label">Country Code</label>
+                                                        <input type="text" class="form-control" value="{{ $property->country_code ?? 'N/A' }}" readonly>
+                                                    </div>
+                                                    <div class="col-sm-3 mb-3">
+                                                        <label class="form-label">State / Region</label>
+                                                        <input type="text" class="form-control" value="{{ $property->administrative_area ?? 'N/A' }}" readonly>
+                                                    </div>
+                                                    <div class="col-sm-3 mb-3">
+                                                        <label class="form-label">City / Town</label>
+                                                        <input type="text" class="form-control" value="{{ $property->city ?? 'N/A' }}" readonly>
+                                                    </div>
+                                                    <div class="col-sm-3 mb-3">
+                                                        <label class="form-label">District / County</label>
+                                                        <input type="text" class="form-control" value="{{ $property->district ?? 'N/A' }}" readonly>
+                                                    </div>
+                                                    <div class="col-sm-3 mb-3">
+                                                        <label class="form-label">Postal Code</label>
+                                                        <input type="text" class="form-control" value="{{ $property->postal_code ?? 'N/A' }}" readonly>
+                                                    </div>
+                                                    <div class="col-sm-6 mb-3">
                                                         <div class="form-group">
                                                             <label for="rated" class="form-label">Rated</label>
                                                             <input type="text" class="form-control" id="rated"

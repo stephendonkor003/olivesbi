@@ -24,6 +24,7 @@ class CreateCustomerRequestFront extends FormRequest
     {
         return [
             'registration_type' => 'required|in:individual,organization',
+            'account_plan' => 'nullable|in:subscriber,account,pro,sky,cloud,shell',
             'first_name' => 'nullable|string',
             'last_name' => 'nullable|string',
             'org_first_name' => 'nullable|string',

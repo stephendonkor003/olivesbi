@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Property;
 
 use App\Services\PropertyValidationService;
+use App\Support\GlobalLocation;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -28,6 +29,7 @@ class CreatePropertyRequest extends FormRequest
             'digitaladdress' => 'nullable|string',
             'location' => 'required|string',
             'streetname' => 'nullable|string',
+            ...GlobalLocation::rules(),
             'is_rated' => 'nullable|string',
             'valuation_number' => 'required_if:is_rated,1|nullable|string',
             'rateable_value' => 'required_if:is_rated,1|nullable|numeric|min:0',
@@ -35,8 +37,8 @@ class CreatePropertyRequest extends FormRequest
             'assembly_code' => 'required|string|exists:assemblies,assembly_code',
             'longitude' => 'required|numeric|between:-180,180',
             'latitude' => 'required|numeric|between:-90,90',
-            'division_id' => 'required|string|exists:divisions,id',
-            'block_id' => 'required|string|exists:blocks,id',
+            'division_id' => 'required|string',
+            'block_id' => 'required|string',
             'geofence' => 'required|string|json',
             'cntr_geom' => 'nullable|string',
         ];

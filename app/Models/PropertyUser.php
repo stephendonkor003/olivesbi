@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasUuid;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class PropertyUser extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
 
     protected $fillable = ['zone_id', 'assembly_code', 'name', 'created_by'];
 

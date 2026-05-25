@@ -40,7 +40,7 @@ class RevenueCollectionEfficiencyReportController extends Controller
                             DATEDIFF(MAX(payments.created_at), MAX(bills.created_at)) AS days_to_payment
                         ")
                         ->join('bills', 'payments.bills_id', '=', 'bills.bills_id')
-                        ->join('properties', 'bills.property_id', '=', 'properties.id')
+                        ->join('properties', 'bills.property_id', '=', 'properties.uuid')
                         ->join('citizens', 'properties.customer_name', '=', 'citizens.id')
                         ->when($request->filled('from_date') && $request->filled('to_date'), function ($query) use ($request) {
                             $query->whereBetween('payments.created_at', [
@@ -92,10 +92,10 @@ class RevenueCollectionEfficiencyReportController extends Controller
                                 ->join($level['table'], 'customers.'.$level['id'], '=', $level['table'].'.id')
                                 ->select(
                                     $level['table'].'.'.$level['column'].' as name',
-                                    $level['table'].'.id as id',
+                                    $level['table'].'.uuid as uuid',
                                     DB::raw('COUNT(*) as total_customer')
                                 )
-                                ->groupBy($level['table'].'.'.$level['column'])
+                                ->groupBy($level['table'].'.'.$level['column'], $level['table'].'.uuid')
                                 ->get();
 
                             return datatables()->of($data)
@@ -104,7 +104,7 @@ class RevenueCollectionEfficiencyReportController extends Controller
                                     return $row->name;
                                 })
                                 ->editColumn('link', function ($row) use ($request) {
-                                    return '<a href="'.route('customers.index', ['param' => $request->name, 'param_id' => $row->id]).'" class="btn btn-success btn-sm" target="_blank">View Details</a>';
+                                    return '<a href="'.route('citizens.index', ['param' => $request->name, 'param_uuid' => $row->uuid]).'" class="btn btn-success btn-sm" target="_blank">View Details</a>';
                                 })
                                 ->rawColumns(['link'])
                                 ->make(true);

@@ -122,6 +122,8 @@
                                 @enderror
                             </div>
 
+                            @include('shared.global-location-fields')
+
                             <div class="col-sm-6 mb-3">
                                 <label for="phone_no" class="form-label">Phone Number</label>
                                 <input type="text" class="form-control @error('phone_no') is-invalid @enderror" value="{{old('phone_no')}}" name="phone_no" placeholder="Phone Number">

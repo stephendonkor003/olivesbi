@@ -44,7 +44,9 @@ use App\Http\Controllers\TaskAssignment\TaskAssignmentController;
 use App\Http\Controllers\User;
 use App\Http\Controllers\Zone\ZoneController;
 use App\Http\Controllers\Donation\DonationController;
+use App\Http\Controllers\Dashboard\AccountDashboardController;
 use App\Http\Controllers\Locality\LocalityBusinessController;
+use App\Http\Controllers\PublicProPaymentRequestController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/faqAction', [Dashboard\DashboardController::class, 'faqAction'])->name('dashboard.faq');
@@ -55,6 +57,10 @@ Route::post('/donate/stripe',         [DonationController::class, 'initializeStr
 Route::get('/donate/verify/paystack',    [DonationController::class, 'verifyPaystack'])->name('donation.verify.paystack');
 Route::get('/donate/verify/flutterwave', [DonationController::class, 'verifyFlutterwave'])->name('donation.verify.flutterwave');
 Route::get('/donate/verify/stripe',      [DonationController::class, 'verifyStripe'])->name('donation.verify.stripe');
+Route::get('/pay/{paymentRequest}', [PublicProPaymentRequestController::class, 'show'])->name('public.pro-payment-requests.show');
+Route::match(['get', 'post'], '/pay/{paymentRequest}/callback', [PublicProPaymentRequestController::class, 'callback'])
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
+    ->name('public.pro-payment-requests.callback');
 
 Route::view('/check-locality', 'auth.check-locality')->name('locality.check');
 Route::get('/check-locality/business-data', LocalityBusinessController::class)->name('locality.business-data');
@@ -91,9 +97,9 @@ Route::group(['prefix' => 'bills-management', 'middleware' => 'auth:sanctum'], f
     Route::get('/fetch/bill', [BillsManagementController::class, 'fetchBill'])->name('bills.fetchBill');
     Route::get('/{bill}/receipt', [BillsManagementController::class, 'receipt'])->name('bills.receipt');
     Route::get('/{bill}', [BillsManagementController::class, 'show'])->name('bills.show');
-    //    Route::get('/{id}/edit', [BillsManagementController::class, 'edit'])->name('bills.edit');
-    Route::put('/{id}', [BillsManagementController::class, 'update'])->name('bills.update');
-    Route::delete('/{id}', [BillsManagementController::class, 'destroy'])->name('bills.destroy');
+    //    Route::get('/{bill}/edit', [BillsManagementController::class, 'edit'])->name('bills.edit');
+    Route::put('/{bill}', [BillsManagementController::class, 'update'])->name('bills.update');
+    Route::delete('/{bill}', [BillsManagementController::class, 'destroy'])->name('bills.destroy');
     Route::get('/fetch/properties', [BillsManagementController::class, 'ajaxList'])->name('bills.properties.ajax');
     Route::post('/preview', [BillsManagementController::class, 'preview'])->name('bills.preview');
 });
@@ -149,7 +155,7 @@ Route::group(['prefix' => 'new-property', 'middleware' => 'auth:sanctum'], funct
     Route::get('/map-data', [NewPropertyController::class, 'getMapData'])->name('properties.mapData');
     Route::get('/polygons', [NewPropertyController::class, 'polygons'])->name('properties.polygons');
     Route::get('/map', [NewPropertyController::class, 'map'])->name('properties.map');
-    Route::get('/allocations/{id}', [NewPropertyController::class, 'allocations'])->name('properties.allocations');
+    Route::get('/allocations/{uuid}', [NewPropertyController::class, 'allocations'])->name('properties.allocations');
     Route::get('/ajax/rated-properties', [NewPropertyController::class, 'ratedProperties'])->name('ajax.rated-properties');
     Route::get('/ajax/search-rated-property', [NewPropertyController::class, 'searchRatedProperty'])->name('ajax.search-rated-property');
 });
@@ -219,9 +225,13 @@ Route::group(['prefix' => 'citizen', 'middleware' => 'auth:sanctum'], function (
     Route::post('/{citizen}', [CitizenController::class, 'update'])->name('citizens.update');
     Route::delete('/{citizen}', [CitizenController::class, 'destroy'])->name('citizens.destroy');
     Route::get('/view/bill/{bill}', [CitizenController::class, 'viewBill'])->name('citizens.viewBill');
+    Route::get('/view/bill/{bill}/invoice', [CitizenController::class, 'viewBillInvoice'])->name('citizens.viewBill.invoice');
+    Route::get('/view/bill/{bill}/invoice/download', [CitizenController::class, 'downloadBillInvoice'])->name('citizens.viewBill.invoice.download');
     Route::get('/view/property/{property}', [CitizenController::class, 'viewProperty'])->name('citizens.viewProperty');
     Route::get('/view/business/{business}', [CitizenController::class, 'viewBusiness'])->name('citizens.viewBusiness');
     Route::get('/view/payment/{payment}', [CitizenController::class, 'viewPayment'])->name('citizens.viewPayment');
+    Route::get('/view/payment/{payment}/receipt', [CitizenController::class, 'viewPaymentReceipt'])->name('citizens.viewPayment.receipt');
+    Route::get('/view/payment/{payment}/receipt/download', [CitizenController::class, 'downloadPaymentReceipt'])->name('citizens.viewPayment.receipt.download');
     Route::get('/import/data', [CitizenController::class, 'import'])->name('citizens.import');
     Route::post('/import/data', [CitizenController::class, 'importData'])->name('citizens.importData');
     Route::get('/template/data', [CitizenController::class, 'downloadTemplate'])->name('citizens.downloadTemplate');
@@ -274,6 +284,69 @@ Route::prefix('')->group(function () {
 
 // DASHBOARD
 Route::group(['prefix' => 'dashboard', 'middleware' => 'auth:sanctum'], function () {
+    Route::get('/', [AccountDashboardController::class, 'entry'])->name('dashboard.entry');
+    Route::get('/subscriber', [AccountDashboardController::class, 'subscriber'])->name('dashboard.subscriber');
+    Route::get('/subscriber/news', [AccountDashboardController::class, 'subscriberNews'])->name('dashboard.subscriber.news');
+    Route::get('/subscriber/alerts', [AccountDashboardController::class, 'subscriberAlerts'])->name('dashboard.subscriber.alerts');
+    Route::get('/subscriber/locality', [AccountDashboardController::class, 'subscriberLocality'])->name('dashboard.subscriber.locality');
+    Route::get('/subscriber/newsletter', [AccountDashboardController::class, 'subscriberNewsletter'])->name('dashboard.subscriber.newsletter');
+    Route::post('/subscriber/newsletter', [AccountDashboardController::class, 'subscriberNewsletterUpdate'])->name('dashboard.subscriber.newsletter.update');
+    Route::get('/subscriber/profile', [AccountDashboardController::class, 'subscriberProfile'])->name('dashboard.subscriber.profile');
+    Route::post('/subscriber/profile', [AccountDashboardController::class, 'subscriberProfileUpdate'])->name('dashboard.subscriber.profile.update');
+    Route::get('/olives-account', [AccountDashboardController::class, 'account'])->name('dashboard.olives-account');
+    Route::get('/olives-account/properties', [AccountDashboardController::class, 'accountProperties'])->name('dashboard.olives-account.properties');
+    Route::get('/olives-account/properties/add-from-map', [AccountDashboardController::class, 'accountPropertyMap'])->name('dashboard.olives-account.properties.map');
+    Route::post('/olives-account/properties/add-from-map', [AccountDashboardController::class, 'accountPropertyMapStore'])->name('dashboard.olives-account.properties.map.store');
+    Route::get('/olives-account/properties/{property}', [CitizenController::class, 'viewProperty'])->name('dashboard.olives-account.properties.show');
+    Route::get('/olives-account/businesses', [AccountDashboardController::class, 'accountBusinesses'])->name('dashboard.olives-account.businesses');
+    Route::get('/olives-account/businesses/{business}', [CitizenController::class, 'viewBusiness'])->name('dashboard.olives-account.businesses.show');
+    Route::get('/olives-account/bills', [AccountDashboardController::class, 'accountBills'])->name('dashboard.olives-account.bills');
+    Route::get('/olives-account/bills/{bill}/invoice', [CitizenController::class, 'viewBillInvoice'])->name('dashboard.olives-account.bills.invoice');
+    Route::get('/olives-account/bills/{bill}/invoice/download', [CitizenController::class, 'downloadBillInvoice'])->name('dashboard.olives-account.bills.invoice.download');
+    Route::get('/olives-account/bills/{bill}', [CitizenController::class, 'viewBill'])->name('dashboard.olives-account.bills.show');
+    Route::get('/olives-account/payments', [AccountDashboardController::class, 'accountPayments'])->name('dashboard.olives-account.payments');
+    Route::get('/olives-account/payments/{payment}/receipt', [CitizenController::class, 'viewPaymentReceipt'])->name('dashboard.olives-account.payments.receipt');
+    Route::get('/olives-account/payments/{payment}/receipt/download', [CitizenController::class, 'downloadPaymentReceipt'])->name('dashboard.olives-account.payments.receipt.download');
+    Route::get('/olives-account/payments/{payment}', [CitizenController::class, 'viewPayment'])->name('dashboard.olives-account.payments.show');
+    Route::get('/olives-account/reports', [AccountDashboardController::class, 'accountReports'])->name('dashboard.olives-account.reports');
+    Route::get('/olives-account/reports/bills', [AccountDashboardController::class, 'accountBillReport'])->name('dashboard.olives-account.reports.bills');
+    Route::get('/olives-account/reports/payments', [AccountDashboardController::class, 'accountPaymentReport'])->name('dashboard.olives-account.reports.payments');
+    Route::get('/olives-account/reports/waste-pickups', [AccountDashboardController::class, 'accountWasteReport'])->name('dashboard.olives-account.reports.waste');
+    Route::get('/olives-account/reports/audit-trail', [AccountDashboardController::class, 'accountAuditReport'])->name('dashboard.olives-account.reports.audit');
+    Route::get('/olives-account/locality', [AccountDashboardController::class, 'accountLocality'])->name('dashboard.olives-account.locality');
+    Route::get('/olives-account/waste-pickups', [Dashboard\WasteManagementController::class, 'accountIndex'])->name('dashboard.olives-account.waste');
+    Route::post('/olives-account/waste-pickups/book', [Dashboard\WasteManagementController::class, 'storeBooking'])->name('dashboard.olives-account.waste.book');
+    Route::post('/olives-account/waste-pickups/{pickup}/complete', [Dashboard\WasteManagementController::class, 'completePickup'])->name('dashboard.olives-account.waste.pickups.complete');
+    Route::post('/olives-account/waste-pickups/{pickup}/missed', [Dashboard\WasteManagementController::class, 'reportMissed'])->name('dashboard.olives-account.waste.pickups.missed');
+    Route::post('/olives-account/waste-pickups/bookings/{booking}/switch-provider', [Dashboard\WasteManagementController::class, 'switchProvider'])->name('dashboard.olives-account.waste.bookings.switch-provider');
+    Route::get('/olives-account/profile', [AccountDashboardController::class, 'accountProfile'])->name('dashboard.olives-account.profile');
+    Route::post('/olives-account/profile', [AccountDashboardController::class, 'accountProfileUpdate'])->name('dashboard.olives-account.profile.update');
+    Route::get('/olives-pro', [AccountDashboardController::class, 'pro'])->name('dashboard.olives-pro');
+    Route::get('/olives-pro/properties', [AccountDashboardController::class, 'proProperties'])->name('dashboard.olives-pro.properties');
+    Route::post('/olives-pro/properties', [AccountDashboardController::class, 'proPropertyStore'])->name('dashboard.olives-pro.properties.store');
+    Route::post('/olives-pro/properties/{property}/validate', [AccountDashboardController::class, 'proPropertyValidate'])->name('dashboard.olives-pro.properties.validate');
+    Route::get('/olives-pro/businesses', [AccountDashboardController::class, 'proBusinesses'])->name('dashboard.olives-pro.businesses');
+    Route::post('/olives-pro/businesses', [AccountDashboardController::class, 'proBusinessStore'])->name('dashboard.olives-pro.businesses.store');
+    Route::post('/olives-pro/businesses/{business}', [AccountDashboardController::class, 'proBusinessUpdate'])->name('dashboard.olives-pro.businesses.update');
+    Route::get('/olives-pro/bills', [AccountDashboardController::class, 'proBills'])->name('dashboard.olives-pro.bills');
+    Route::post('/olives-pro/bills/property-rates/generate', [AccountDashboardController::class, 'proPropertyRateBillsGenerate'])->name('dashboard.olives-pro.bills.property-rates.generate');
+    Route::get('/olives-pro/payments', [AccountDashboardController::class, 'proPayments'])->name('dashboard.olives-pro.payments');
+    Route::post('/olives-pro/payment-links', [AccountDashboardController::class, 'proPaymentLinkStore'])->name('dashboard.olives-pro.payment-links.store');
+    Route::get('/olives-pro/laws-fees', [AccountDashboardController::class, 'proLawsFees'])->name('dashboard.olives-pro.laws-fees');
+    Route::get('/olives-pro/citizens', [AccountDashboardController::class, 'proCitizens'])->name('dashboard.olives-pro.citizens');
+    Route::get('/olives-pro/users', [AccountDashboardController::class, 'proUsers'])->name('dashboard.olives-pro.users');
+    Route::post('/olives-pro/users/agents', [AccountDashboardController::class, 'proAgentStore'])->name('dashboard.olives-pro.agents.store');
+    Route::get('/olives-pro/reports', [AccountDashboardController::class, 'proReports'])->name('dashboard.olives-pro.reports');
+    Route::get('/olives-pro/integrations', [AccountDashboardController::class, 'proIntegrations'])->name('dashboard.olives-pro.integrations');
+    Route::post('/olives-pro/integrations', [AccountDashboardController::class, 'proIntegrationStore'])->name('dashboard.olives-pro.integrations.store');
+    Route::get('/olives-pro/profile', [AccountDashboardController::class, 'proProfile'])->name('dashboard.olives-pro.profile');
+    Route::post('/olives-pro/profile', [AccountDashboardController::class, 'proProfileUpdate'])->name('dashboard.olives-pro.profile.update');
+    Route::get('/olives-pro/waste-companies', [Dashboard\WasteManagementController::class, 'proIndex'])->name('dashboard.olives-pro.waste-companies');
+    Route::post('/olives-pro/waste-companies', [Dashboard\WasteManagementController::class, 'storeCompany'])->name('dashboard.olives-pro.waste-companies.store');
+    Route::post('/olives-pro/waste-companies/{company}/plans', [Dashboard\WasteManagementController::class, 'storePlan'])->name('dashboard.olives-pro.waste-companies.plans.store');
+    Route::get('/olives-sky', [AccountDashboardController::class, 'sky'])->name('dashboard.olives-sky');
+    Route::get('/olives-cloud', [AccountDashboardController::class, 'cloud'])->name('dashboard.olives-cloud');
+    Route::get('/olives-shell', [AccountDashboardController::class, 'shell'])->name('dashboard.olives-shell');
     Route::get('/operational', [Dashboard\DashboardController::class, 'operational'])->name('dashboard.operational');
     Route::get('/MyBills', [Dashboard\DashboardController::class, 'Mybills'])->name('dashboard.mybills');
     Route::get('/myprofile', [Dashboard\DashboardController::class, 'myProfile'])->name('dashboard.myprofile');
@@ -316,9 +389,9 @@ Route::group(['prefix' => 'role', 'middleware' => 'auth:sanctum'], function () {
 //    Route::get('/', [Permission\PermissionController::class, 'index'])->name('permissions.index');
 //    Route::get('/create', [Permission\PermissionController::class, 'create'])->name('permissions.create');
 //    Route::post('/', [Permission\PermissionController::class, 'store'])->name('permissions.store');
-//    Route::get('/show/{id}', [Permission\PermissionController::class, 'show'])->name('permissions.show');
-//    Route::get('/edit/{id}', [Permission\PermissionController::class, 'edit'])->name('permissions.edit');
-//    Route::post('/update/{id}', [Permission\PermissionController::class, 'update'])->name('permissions.update');
+//    Route::get('/show/{permission}', [Permission\PermissionController::class, 'show'])->name('permissions.show');
+//    Route::get('/edit/{permission}', [Permission\PermissionController::class, 'edit'])->name('permissions.edit');
+//    Route::post('/update/{permission}', [Permission\PermissionController::class, 'update'])->name('permissions.update');
 // });
 
 // assemblies Route
@@ -480,7 +553,7 @@ Route::group(['prefix' => 'building', 'middleware' => 'auth:sanctum'], function 
     Route::get('/map', [BuildingController::class, 'map'])->name('buildings.map');
     Route::get('/import', [BuildingController::class, 'importBlock'])->name('buildings.importBlock');
     Route::post('/import', [BuildingController::class, 'importBlockStore'])->name('buildings.importBlockStore');
-    Route::get('/allocations/{id}', [BuildingController::class, 'allocations'])->name('buildings.allocations');
+    Route::get('/allocations/{uuid}', [BuildingController::class, 'allocations'])->name('buildings.allocations');
 });
 
 Route::group(['prefix' => 'mmda', 'middleware' => 'auth:sanctum'], function () {

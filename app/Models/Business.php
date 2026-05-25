@@ -2,16 +2,33 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasUuid;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Business extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
 
     protected $guarded = [
         'id',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Business $business) {
+            if (empty($business->uuid)) {
+                $business->uuid = (string) Str::uuid();
+            }
+        });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
 
     public function customer()
     {
@@ -70,7 +87,7 @@ class Business extends Model
 
     public function bills()
     {
-        return $this->hasMany(Bill::class, 'business_id');
+        return $this->hasMany(Bill::class, 'business_id', 'uuid');
     }
 
     public function createdBy()

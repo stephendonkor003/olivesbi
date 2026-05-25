@@ -103,6 +103,8 @@
                                 </div>
                             </div>
 
+                            @include('shared.global-location-fields', ['record' => $property])
+
                             <div class="col-sm-6 mb-3">
                                 <label for="entity_type" class="form-label">Associate Owner</label>
                                 <small class="form-text text-muted d-block mb-1">Search by name, email, phone, or ERMS ID (min. 2 characters)</small>

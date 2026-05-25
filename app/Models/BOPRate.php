@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasUuid;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class BOPRate extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
 
     protected $fillable = ['zone_id', 'assembly_code', 'property_use_id', 'amount', 'created_by'];
 

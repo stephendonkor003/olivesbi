@@ -121,10 +121,10 @@
                                                     <div class="dropdown-menu dropdown-menu-end">
                                                         <div class="py-2">
                                                             <a class="dropdown-item"
-                                                                href=" {{ route('assembly.show', $assembly->id) }}">View
+                                                                href=" {{ route('assembly.show', $assembly) }}">View
                                                             </a>
                                                             <a class="dropdown-item"
-                                                                href=" {{ route('assembly.edit', $assembly->id) }}">Edit
+                                                                href=" {{ route('assembly.edit', $assembly) }}">Edit
                                                             </a>
                                                         </div>
                                                     </div>

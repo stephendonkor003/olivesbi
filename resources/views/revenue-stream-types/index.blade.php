@@ -96,10 +96,10 @@
                                                 <div class="dropdown-menu dropdown-menu-end">
                                                     <div class="py-2">
                                                         <a class="dropdown-item"
-                                                            href=" {{ route('revenue-stream-types.show', $revenueStreamType->id) }}">View
+                                                            href=" {{ route('revenue-stream-types.show', $revenueStreamType) }}">View
                                                         </a>
                                                         <a class="dropdown-item"
-                                                            href=" {{ route('revenue-stream-types.edit', $revenueStreamType->id) }}">Edit
+                                                            href=" {{ route('revenue-stream-types.edit', $revenueStreamType) }}">Edit
                                                         </a>
                                                     </div>
                                                 </div>

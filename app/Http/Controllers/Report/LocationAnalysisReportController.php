@@ -31,7 +31,7 @@ class LocationAnalysisReportController extends Controller
 
                     $data = DB::table('payments as pym')
                         ->rightJoin('bills as b', 'pym.bills_id', '=', 'b.bills_id')
-                        ->rightJoin('properties as p', 'b.property_id', '=', 'p.id')
+                        ->rightJoin('properties as p', 'b.property_id', '=', 'p.uuid')
                         ->rightJoin('assemblies as a', 'p.assembly_code', '=', 'a.assembly_code')
                         ->rightJoin('ghana_regions as gr', 'a.regional_code', '=', 'gr.regional_code')
                         ->select(
@@ -112,10 +112,10 @@ class LocationAnalysisReportController extends Controller
                                 ->join($level['table'], 'customers.'.$level['id'], '=', $level['table'].'.id')
                                 ->select(
                                     $level['table'].'.'.$level['column'].' as name',
-                                    $level['table'].'.id as id',
+                                    $level['table'].'.uuid as uuid',
                                     DB::raw('COUNT(*) as total_customer')
                                 )
-                                ->groupBy($level['table'].'.'.$level['column'])
+                                ->groupBy($level['table'].'.'.$level['column'], $level['table'].'.uuid')
                                 ->get();
 
                             return datatables()->of($data)
@@ -124,7 +124,7 @@ class LocationAnalysisReportController extends Controller
                                     return $row->name;
                                 })
                                 ->editColumn('link', function ($row) use ($request) {
-                                    return '<a href="'.route('customers.index', ['param' => $request->name, 'param_id' => $row->id]).'" class="btn btn-success btn-sm" target="_blank">View Details</a>';
+                                    return '<a href="'.route('citizens.index', ['param' => $request->name, 'param_uuid' => $row->uuid]).'" class="btn btn-success btn-sm" target="_blank">View Details</a>';
                                 })
                                 ->rawColumns(['link'])
                                 ->make(true);

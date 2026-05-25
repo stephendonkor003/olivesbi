@@ -317,12 +317,9 @@
         <div class="collapse navbar-collapse" id="navMenu">
             <ul class="navbar-nav mx-auto gap-1">
                 <li class="nav-item"><a class="nav-link nav-link-custom" href="{{ route('auth.LandingPage') }}#features">Features</a></li>
-                <li class="nav-item"><a class="nav-link nav-link-custom" href="{{ route('auth.LandingPage') }}#coverage">Coverage</a></li>
                 <li class="nav-item"><a class="nav-link nav-link-custom" href="{{ route('auth.LandingPage') }}#how-it-works">How It Works</a></li>
-                <li class="nav-item"><a class="nav-link nav-link-custom" href="{{ route('auth.LandingPage') }}#mission">Mission</a></li>
                 <li class="nav-item"><a class="nav-link nav-link-custom" href="{{ route('locality.check') }}">Check Locality</a></li>
                 <li class="nav-item"><a class="nav-link nav-link-custom" href="{{ route('igf.index') }}" style="font-weight:600;">Business We Support</a></li>
-                <li class="nav-item"><a class="nav-link nav-link-custom" href="{{ route('auth.LandingPage') }}#contact">Contact</a></li>
                 <li class="nav-item">
                     <a class="nav-link nav-link-custom" href="{{ route('donation.index') }}"
                        style="color:var(--accent) !important; font-weight:700;">

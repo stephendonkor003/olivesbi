@@ -34,11 +34,11 @@ class AgentController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($uuid)
     {
         $user = User::query()
             ->with(['assembly', 'division'])
-            ->where('id', $id)
+            ->whereUuidOrId($uuid)
             ->where('access_level', 'Assembly_Agent')
             ->first();
 
@@ -54,13 +54,13 @@ class AgentController extends Controller
         ]);
     }
 
-    public function update(UpdateUserRequest $request, $id)
+    public function update(UpdateUserRequest $request, $uuid)
     {
         $data = $request->validated();
 
         $user = User::query()
             ->with(['assembly', 'division'])
-            ->where('id', $id)
+            ->whereUuidOrId($uuid)
             ->first();
 
         if (empty($user)) {
@@ -115,7 +115,7 @@ class AgentController extends Controller
         ]);
     }
 
-    public function agentTaskShow(Request $request, $id)
+    public function agentTaskShow(Request $request, $uuid)
     {
         $taskAssignment = TaskAssignment::orderBy('created_at', 'DESC')
             ->with(['supervisor', 'agent', 'assembly'])
@@ -128,7 +128,7 @@ class AgentController extends Controller
             ->when($request->user()->access_level == 'Assembly_Agent', function ($query) use ($request) {
                 $query->where('agent_id', $request->user()->id);
             })
-            ->where('id', $id)
+            ->whereUuidOrId($uuid)
             ->first();
 
         if ($taskAssignment) {
@@ -154,9 +154,9 @@ class AgentController extends Controller
         ]);
     }
 
-    public function agentTaskAssignment(Request $request, $id)
+    public function agentTaskAssignment(Request $request, $uuid)
     {
-        $agent = User::where('id', $id)
+        $agent = User::whereUuidOrId($uuid)
             ->where('access_level', 'Assembly_Agent')
             ->first();
 
@@ -211,11 +211,11 @@ class AgentController extends Controller
                             ->reduce(function ($carry, $property) {
                                 $propertyPayments = DB::table('payments')
                                     ->join('bills', 'payments.bills_id', '=', 'bills.bills_id')
-                                    ->where('bills.property_id', $property->id)
+                                    ->where('bills.property_id', $property->uuid)
                                     ->select(
                                         DB::raw('SUM(CASE 
-                                            WHEN payment_mode = "momo" AND transaction_status = "Success" THEN payments.amount 
-                                            WHEN payment_mode != "momo" THEN payments.amount 
+                                            WHEN payment_mode = \'momo\' AND transaction_status = \'Success\' THEN payments.amount 
+                                            WHEN payment_mode != \'momo\' THEN payments.amount 
                                             ELSE 0 
                                         END) as total_payments')
                                     )
@@ -228,7 +228,7 @@ class AgentController extends Controller
                             ->get()
                             ->reduce(function ($carry, $property) {
                                 $propertyBills = DB::table('bills')
-                                    ->where('property_id', $property->id)
+                                    ->where('property_id', $property->uuid)
                                     ->sum('amount');
 
                                 return $carry + $propertyBills;
@@ -279,11 +279,11 @@ class AgentController extends Controller
                             ->reduce(function ($carry, $property) {
                                 return $carry + DB::table('payments')
                                     ->join('bills', 'payments.bills_id', '=', 'bills.bills_id')
-                                    ->where('bills.property_id', $property->id)
+                                    ->where('bills.property_id', $property->uuid)
                                     ->select(
                                         DB::raw('SUM(CASE 
-                                            WHEN payment_mode = "momo" AND transaction_status = "Success" THEN payments.amount 
-                                            WHEN payment_mode != "momo" THEN payments.amount 
+                                            WHEN payment_mode = \'momo\' AND transaction_status = \'Success\' THEN payments.amount 
+                                            WHEN payment_mode != \'momo\' THEN payments.amount 
                                             ELSE 0 
                                         END) as total_payments')
                                     )
@@ -294,7 +294,7 @@ class AgentController extends Controller
                             ->get()
                             ->reduce(function ($carry, $property) {
                                 return $carry + DB::table('bills')
-                                    ->where('property_id', $property->id)
+                                    ->where('property_id', $property->uuid)
                                     ->sum('amount');
                             }, 0);
 
@@ -327,9 +327,9 @@ class AgentController extends Controller
         ]);
     }
 
-    public function agentTaskBlock($id, $task_type)
+    public function agentTaskBlock($uuid, $task_type)
     {
-        $agent = User::where('id', $id)
+        $agent = User::whereUuidOrId($uuid)
             ->where('access_level', 'Assembly_Agent')
             ->first();
 
@@ -369,8 +369,16 @@ class AgentController extends Controller
         ]);
     }
 
-    public function agentPropertyBlock($id)
+    public function agentPropertyBlock($uuid)
     {
+        $block = Block::whereUuidOrId($uuid)->first();
+
+        if (! $block) {
+            return response()->json([
+                'message' => 'Block not found',
+            ], 422);
+        }
+
         $properties = Property::orderBy('created_at', 'DESC')
             ->with([
                 'customer',
@@ -379,8 +387,8 @@ class AgentController extends Controller
                 'bills.payments',
                 'polygon:id,cntr_x_coord,cntr_y_coord,block_id',
             ])
-            ->whereHas('polygon', function ($q) use ($id) {
-                $q->where('block_id', $id);
+            ->whereHas('polygon', function ($q) use ($block) {
+                $q->where('block_id', $block->id);
             })
             ->get();
 
@@ -396,9 +404,9 @@ class AgentController extends Controller
         ]);
     }
 
-    public function agentPayment($id)
+    public function agentPayment($uuid)
     {
-        $agent = User::where('id', $id)
+        $agent = User::whereUuidOrId($uuid)
             ->where('access_level', 'Assembly_Agent')
             ->first();
 
@@ -430,9 +438,9 @@ class AgentController extends Controller
         ]);
     }
 
-    public function taskUpdate(UpdateTaskAssignment $request, $id)
+    public function taskUpdate(UpdateTaskAssignment $request, $uuid)
     {
-        $taskAssignment = TaskAssignment::where('id', $id)->first();
+        $taskAssignment = TaskAssignment::whereUuidOrId($uuid)->first();
 
         if (empty($taskAssignment)) {
             return response()->json([
@@ -440,10 +448,18 @@ class AgentController extends Controller
             ], 422);
         }
 
+        $block = Block::whereUuidOrId($request->block_id)->first();
+
+        if (! $block) {
+            return response()->json([
+                'message' => 'Block not found',
+            ], 422);
+        }
+
         $blockData = $taskAssignment->block_data;
 
         $statusUpdate = [
-            $request->block_id => $request->status,
+            $block->id => $request->status,
         ];
 
         // Update the block_data

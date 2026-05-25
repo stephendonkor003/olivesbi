@@ -66,6 +66,38 @@
                                 <input type="text" class="form-control" name="digitaladdress"
                                     placeholder="Digital Address" value="{{ $business->digitaladdress }}" readonly>
                             </div>
+                            <div class="col-sm-6 mb-3">
+                                <label class="form-label">Full Address</label>
+                                <input type="text" class="form-control" value="{{ $business->address_line ?? 'N/A' }}" readonly>
+                            </div>
+                            <div class="col-sm-3 mb-3">
+                                <label class="form-label">Continent</label>
+                                <input type="text" class="form-control" value="{{ $business->continent ?? 'N/A' }}" readonly>
+                            </div>
+                            <div class="col-sm-3 mb-3">
+                                <label class="form-label">Country</label>
+                                <input type="text" class="form-control" value="{{ $business->country ?? 'N/A' }}" readonly>
+                            </div>
+                            <div class="col-sm-3 mb-3">
+                                <label class="form-label">Country Code</label>
+                                <input type="text" class="form-control" value="{{ $business->country_code ?? 'N/A' }}" readonly>
+                            </div>
+                            <div class="col-sm-3 mb-3">
+                                <label class="form-label">State / Region</label>
+                                <input type="text" class="form-control" value="{{ $business->administrative_area ?? 'N/A' }}" readonly>
+                            </div>
+                            <div class="col-sm-3 mb-3">
+                                <label class="form-label">City / Town</label>
+                                <input type="text" class="form-control" value="{{ $business->city ?? 'N/A' }}" readonly>
+                            </div>
+                            <div class="col-sm-3 mb-3">
+                                <label class="form-label">District / County</label>
+                                <input type="text" class="form-control" value="{{ $business->district ?? 'N/A' }}" readonly>
+                            </div>
+                            <div class="col-sm-3 mb-3">
+                                <label class="form-label">Postal Code</label>
+                                <input type="text" class="form-control" value="{{ $business->postal_code ?? 'N/A' }}" readonly>
+                            </div>
 
                             <div class="col-sm-6 mb-3">
                                 <label for="house_number" class="form-label">House Number</label>

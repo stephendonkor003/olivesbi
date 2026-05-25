@@ -108,6 +108,8 @@
                                 </div>
                             </div>
 
+                            @include('shared.global-location-fields', ['record' => $property])
+
                             <div class="col-sm-6 mb-3">
                                 <div class="form-group">
                                     <label for="rated" class="form-label">Rated</label>

@@ -403,6 +403,9 @@
         $totalAmount = $bill->amount + $bill->arrears - (float) ($bill->total_payments_sum ?? 0.0);
         $totalAmount = $totalAmount - (float) ($bill->discount_amount ?? 0.0);
         $totalAmountDue = number_format($totalAmount, 2) ?? 0.0;
+        $currencyCode = strtoupper(trim((string) ($bill->assembly?->currency_code ?: 'GHS')));
+        $currencySymbol = trim((string) ($bill->assembly?->currency_symbol ?: $currencyCode));
+        $currencyLabel = $currencySymbol ?: $currencyCode;
     @endphp
     <div class="bill-container" id="bill">
         <div class="bill-header">
@@ -464,7 +467,7 @@
             <thead>
                 <tr>
                     <th>REVENUE ITEM DESCRIPTION</th>
-                    <th>AMOUNT (GHS)</th>
+                    <th>AMOUNT ({{ $currencyCode }})</th>
                 </tr>
             </thead>
             <tbody>
@@ -557,7 +560,9 @@
         </div>
     </div>
     <!-- Pay Button -->
-    <button class="pay-btn" id="payBillBtn">Pay Bill</button>
+    @if ($totalAmount > 0)
+        <button class="pay-btn" id="payBillBtn">Pay Bill</button>
+    @endif
 
     <!-- Payment Modal -->
     <div id="paymentModal" class="modal">
@@ -565,13 +570,13 @@
             <span class="close" id="closeModal">&times;</span>
             <h2 style="margin-top: 0;">Pay Bill</h2>
             <p><strong>Bill No:</strong> {{ $billId }}</p>
-            <p><strong>Amount Due:</strong> GHS {{ $totalAmountDue }}</p>
+            <p><strong>Amount Due:</strong> {{ $currencyLabel }} {{ $totalAmountDue }}</p>
 
             <form id="paymentForm">
                 <div class="form-group">
-                    <label for="amount">Amount to Pay (GHS) <span style="color: red;">*</span></label>
+                    <label for="amount">Amount to Pay ({{ $currencyCode }}) <span style="color: red;">*</span></label>
                     <input type="number" id="amount" name="amount" value="{{ str_replace(',', '', $totalAmountDue) }}" step="0.01" min="1" max="{{ str_replace(',', '', $totalAmountDue) }}" required>
-                    <small style="font-size: 11px; color: #666;">Maximum: GHS {{ $totalAmountDue }}</small>
+                    <small style="font-size: 11px; color: #666;">Maximum: {{ $currencyLabel }} {{ $totalAmountDue }}</small>
                     <span class="error-message" id="amount_error"></span>
                 </div>
 
@@ -591,9 +596,11 @@
         const submitBtn = document.getElementById('submitPayment');
 
         // Open modal when pay button is clicked
-        payBtn.addEventListener('click', function() {
-            modal.style.display = 'block';
-        });
+        if (payBtn) {
+            payBtn.addEventListener('click', function() {
+                modal.style.display = 'block';
+            });
+        }
 
         // Close modal when X is clicked
         closeBtn.addEventListener('click', function() {
@@ -618,7 +625,7 @@
                 document.getElementById('amount_error').textContent = 'Valid amount is required';
                 hasError = true;
             } else if (parseFloat(amount) > maxAmount) {
-                document.getElementById('amount_error').textContent = 'Amount cannot exceed GHS ' + maxAmount.toFixed(2);
+                document.getElementById('amount_error').textContent = 'Amount cannot exceed {{ $currencyLabel }} ' + maxAmount.toFixed(2);
                 hasError = true;
             }
 
@@ -631,7 +638,7 @@
             submitBtn.textContent = 'Processing...';
 
             // Initialize payment with backend (using backend data for name, email, phone)
-            fetch('{{ route("public.bills.payment.initialize", $bill->id) }}', {
+            fetch('{{ route("public.bills.payment.initialize", $bill) }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

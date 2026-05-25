@@ -35,7 +35,7 @@
             <div class="card">
                 <div class="card-body">
                     <form class="row g-3 needs-validation" method="POST"
-                        action="{{ route('permissions.update', $role->id) }}">
+                        action="{{ route('permissions.update', $role) }}">
                         @csrf
 
                         <div class="col-md-12 mb-4">

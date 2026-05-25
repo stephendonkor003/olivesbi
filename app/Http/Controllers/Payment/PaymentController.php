@@ -355,7 +355,7 @@ class PaymentController extends Controller
         }
 
         $payment->update([
-            'transaction_status' => $data['status'],
+            'transaction_status' => strtolower((string) $data['status']) === 'success' ? 'Success' : $data['status'],
             'payment_mode' => $data['channel'] ?? 'paystack',
         ]);
 

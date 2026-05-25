@@ -23,9 +23,9 @@ class DivisionController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($uuid)
     {
-        $division = Division::where('id', $id)
+        $division = Division::whereUuidOrId($uuid)
             ->with(['assembly'])
             ->first();
 

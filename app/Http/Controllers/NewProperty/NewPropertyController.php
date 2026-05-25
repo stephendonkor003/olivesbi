@@ -26,6 +26,7 @@ use App\Models\User;
 use App\Models\ValuationList;
 use App\Models\Zone;
 use App\Services\PropertyValidationService;
+use App\Support\GlobalLocation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -94,9 +95,9 @@ class NewPropertyController extends Controller
                             </div>
                             <div class="dropdown-menu dropdown-menu-end">
                                 <div class="py-2">
-                                    <a class="dropdown-item" href="'.route('new-properties.show', $property->id).'">View</a>
-                                    <a class="dropdown-item" href="'.route('new-properties.edit', $property->id).'">Edit</a>
-                                    <a class="dropdown-item" href="'.route('properties.assignRevenueStream', $property->id).'">Assign Revenue Stream</a>
+                                    <a class="dropdown-item" href="'.route('new-properties.show', $property).'">View</a>
+                                    <a class="dropdown-item" href="'.route('new-properties.edit', $property).'">Edit</a>
+                                    <a class="dropdown-item" href="'.route('properties.assignRevenueStream', $property).'">Assign Revenue Stream</a>
                                 </div>
                             </div>
                         </div>
@@ -207,20 +208,27 @@ class NewPropertyController extends Controller
             throw ValidationException::withMessages(['assembly_code' => 'The selected assembly code is invalid']);
         }
 
-        $division = Division::where('assembly_code', $data['assembly_code'])->find($data['division_id']);
+        $division = Division::where('assembly_code', $data['assembly_code'])
+            ->whereUuidOrId($data['division_id'])
+            ->first();
 
         if (! $division) {
             throw ValidationException::withMessages(['division_id' => 'The selected division id is invalid']);
         }
 
+        $data['division_id'] = $division->id;
+
         $block = Block::query()
             ->where('assembly_code', $data['assembly_code'])
             ->where('division_id', $data['division_id'])
-            ->find($data['block_id']);
+            ->whereUuidOrId($data['block_id'])
+            ->first();
 
         if (! $block) {
             throw ValidationException::withMessages(['block_id' => 'The selected block id is invalid']);
         }
+
+        $data['block_id'] = $block->id;
 
         try {
             $propertyId = app(GeneratePropertyIDAction::class)
@@ -280,6 +288,11 @@ class NewPropertyController extends Controller
             // Create polygon
             $polygon = Polygon::create($polygonData);
 
+            $globalLocation = GlobalLocation::from(
+                $data,
+                $data['digitaladdress'] ?? $data['location'] ?? $data['streetname'] ?? null
+            );
+
             $propertyData = [
                 'erms_id' => $propertyId,
                 'account_no' => $account_no,
@@ -288,6 +301,7 @@ class NewPropertyController extends Controller
                 'digitaladdress' => $data['digitaladdress'] ?? null,
                 'location' => $data['location'] ?? null,
                 'streetname' => $data['streetname'] ?? null,
+                ...$globalLocation,
                 'prop_rev_id' => null,
                 'is_bsc_rate' => PropertyConstants::DEFAULT_RATE_JSON,
                 'owner_id' => $data['owner_id'],
@@ -324,10 +338,10 @@ class NewPropertyController extends Controller
         if ($citizen && $property) {
             $bills = Bill::orderBy('created_at', 'DESC')
                 ->with(['property'])
-                ->whereHas('property', function ($query) use ($citizen, $property) {
-                    $query->where('owner_id', $citizen->erms_id)
-                        ->where('property_id', $property->id);
+                ->whereHas('property', function ($query) use ($citizen) {
+                    $query->where('owner_id', $citizen->erms_id);
                 })
+                ->where('property_id', $property->uuid)
                 ->whereNotNull('property_id')
                 ->whereNull('business_id')
                 ->get();
@@ -335,7 +349,7 @@ class NewPropertyController extends Controller
             $payments = Payment::orderBy('created_at', 'DESC')
                 ->whereHas('bill', function ($query) use ($property) {
                     $query->whereNotNull('property_id')
-                        ->where('property_id', $property->id);
+                        ->where('property_id', $property->uuid);
                 })
                 ->where('transaction_status', 'Success')
                 ->get();
@@ -439,6 +453,28 @@ class NewPropertyController extends Controller
             $data['assembly_code'] = $request->user()->assembly_code;
         }
 
+        $division = Division::where('assembly_code', $data['assembly_code'])
+            ->whereUuidOrId($data['division_id'])
+            ->first();
+
+        if (! $division) {
+            throw ValidationException::withMessages(['division_id' => 'The selected division id is invalid']);
+        }
+
+        $data['division_id'] = $division->id;
+
+        $block = Block::query()
+            ->where('assembly_code', $data['assembly_code'])
+            ->where('division_id', $data['division_id'])
+            ->whereUuidOrId($data['block_id'])
+            ->first();
+
+        if (! $block) {
+            throw ValidationException::withMessages(['block_id' => 'The selected block id is invalid']);
+        }
+
+        $data['block_id'] = $block->id;
+
         $polygonData = [
             'building' => json_decode($request->geofence, true),
             'block_id' => $data['block_id'],
@@ -449,11 +485,17 @@ class NewPropertyController extends Controller
             'assembly_code' => $data['assembly_code'],
         ];
 
+        $globalLocation = GlobalLocation::from(
+            $data,
+            $data['digitaladdress'] ?? $data['location'] ?? $data['streetname'] ?? null
+        );
+
         $propertyData = [
             'hseno' => $data['hseno'] ?? null,
             'digitaladdress' => $data['digitaladdress'] ?? null,
             'location' => $data['location'] ?? null,
             'streetname' => $data['streetname'] ?? null,
+            ...$globalLocation,
             'is_bsc_rate' => PropertyConstants::DEFAULT_RATE_JSON,
             'owner_id' => $data['owner_id'],
             'is_rated' => $data['is_rated'],
@@ -556,8 +598,8 @@ class NewPropertyController extends Controller
 
     public function assignRevenueStreamStore(Request $request)
     {
-        $property = Property::where('id', $request->query('property_id'))->first();
-        $revenueStreamsId = $request->query('revenue_stream_id') ?? null;
+        $property = Property::whereUuidOrId($request->query('property_id'))->first();
+        $revenueStreamsId = RevenueStream::whereUuidOrId($request->query('revenue_stream_id'))->value('id');
 
         $property?->update(['prop_rev_id' => $revenueStreamsId]);
 
@@ -573,8 +615,8 @@ class NewPropertyController extends Controller
         $paymentsSubquery = DB::table('payments')
             ->join('bills', 'payments.bills_id', '=', 'bills.bills_id')
             ->select('bills.property_id', DB::raw('SUM(CASE
-                WHEN payments.payment_mode = "momo" AND payments.transaction_status = "Success" THEN payments.amount
-                WHEN payments.payment_mode != "momo" THEN payments.amount
+                WHEN payments.payment_mode = \'momo\' AND payments.transaction_status = \'Success\' THEN payments.amount
+                WHEN payments.payment_mode != \'momo\' THEN payments.amount
                 ELSE 0
             END) as total_payments'))
             ->groupBy('bills.property_id');
@@ -583,8 +625,8 @@ class NewPropertyController extends Controller
             ->join('assemblies', 'properties.assembly_code', '=', 'assemblies.assembly_code')
             ->leftJoin('polygons', 'properties.polygon_id', '=', 'polygons.id')
             ->leftJoin('entity_owners', 'properties.owner_id', '=', 'entity_owners.erms_id')
-            ->leftJoinSub($billsSubquery, 'bills_sum', 'properties.id', '=', 'bills_sum.property_id')
-            ->leftJoinSub($paymentsSubquery, 'payments_sum', 'properties.id', '=', 'payments_sum.property_id')
+            ->leftJoinSub($billsSubquery, 'bills_sum', 'properties.uuid', '=', 'bills_sum.property_id')
+            ->leftJoinSub($paymentsSubquery, 'payments_sum', 'properties.uuid', '=', 'payments_sum.property_id')
             ->select([
                 'polygons.cntr_y_coord as latitude',
                 'polygons.cntr_x_coord as longitude',

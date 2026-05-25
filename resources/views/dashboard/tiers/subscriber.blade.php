@@ -1,0 +1,41 @@
+@include('dashboard.tiers.partials.shell', [
+    'accent'    => '#4cc76a',
+    'tier'      => 'Subscriber',
+    'tierSlug'  => 'subscriber',
+    'scope'     => 'Environmental News & Alerts',
+    'subtitle'  => 'Stay informed on the environment, climate, land use, and local alerts.',
+    'focus'     => [
+        'Follow real-time environmental news across regions and localities.',
+        'Receive alerts on pollution, waste risk, flooding, and hazards.',
+        'Research public land, biodiversity, and air quality data.',
+        'Manage your newsletter interests and notification topics.',
+        'Access public locality safety and environmental score checks.',
+    ],
+    'sidebarNav' => [
+        ['icon' => 'bi-speedometer2',    'label' => 'Dashboard',       'url' => route('dashboard.subscriber'),            'active' => true],
+        ['icon' => 'bi-newspaper',       'label' => 'Environment News', 'url' => route('dashboard.subscriber.news')],
+        ['icon' => 'bi-bell',            'label' => 'My Alerts',        'url' => route('dashboard.subscriber.alerts')],
+        ['icon' => 'bi-geo-alt',         'label' => 'Check Locality',   'url' => route('dashboard.subscriber.locality')],
+        ['icon' => 'bi-envelope-paper',  'label' => 'Newsletter',       'url' => route('dashboard.subscriber.newsletter')],
+        ['icon' => 'bi-person-circle',   'label' => 'My Profile',       'url' => route('dashboard.subscriber.profile')],
+        ['icon' => 'bi-box-arrow-left',  'label' => 'Sign Out',         'url' => route('auth.logout')],
+    ],
+    'metricKeys' => [
+        'News Regions'      => 'regions',
+        'Locality Points'   => 'properties',
+        'Active Alerts'     => 'users',
+        'Public Datasets'   => 'businesses',
+    ],
+    'cards' => [
+        ['icon' => 'bi-newspaper',       'title' => 'Environment News',  'text' => 'Updates on pollution, climate, waste, and land-use risks.',   'url' => route('dashboard.subscriber.news')],
+        ['icon' => 'bi-bell-fill',       'title' => 'My Alerts',         'text' => 'Follow local environmental notices and issue briefings.',      'url' => route('dashboard.subscriber.alerts')],
+        ['icon' => 'bi-search',          'title' => 'Research Locality',  'text' => 'Search public environmental and locality intelligence data.',  'url' => route('dashboard.subscriber.locality')],
+        ['icon' => 'bi-envelope-paper',  'title' => 'Newsletter Topics', 'text' => 'Manage your newsletter interests and email update settings.',  'url' => route('dashboard.subscriber.newsletter')],
+    ],
+    'profileRoute' => route('dashboard.subscriber.profile'),
+    'quickLinks' => [
+        ['label' => 'Environment News', 'url' => route('dashboard.subscriber.news'), 'hint' => 'Public environmental updates and briefs'],
+        ['label' => 'My Alerts', 'url' => route('dashboard.subscriber.alerts'), 'hint' => 'Local risk alerts and watchlist settings'],
+        ['label' => 'Newsletter', 'url' => route('dashboard.subscriber.newsletter'), 'hint' => 'Manage topics and subscriptions'],
+    ],
+])

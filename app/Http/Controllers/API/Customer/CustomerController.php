@@ -126,10 +126,13 @@ class CustomerController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($uuid)
     {
-        $customer = Owner::where('id', $id)
-            ->orWhere('erms_id', $id)
+        $customer = Owner::query()
+            ->where(function ($query) use ($uuid) {
+                $query->whereUuidOrId($uuid)
+                    ->orWhere('erms_id', $uuid);
+            })
             ->first();
 
         if (empty($customer)) {
@@ -144,20 +147,21 @@ class CustomerController extends Controller
         ]);
     }
 
-    public function multipleParam($id)
+    public function multipleParam($uuid)
     {
         $customer = Owner::with([
             'user',
             'properties.polygon.block.division',
             'properties.polygon:id,cntr_x_coord,cntr_y_coord,block_id',
         ])
-            ->where(function ($query) use ($id) {
-                $query->where('erms_id', $id)
-                    ->orWhere('tin_no', $id)
-                    ->orWhere('fname', 'LIKE', "%$id%")
-                    ->orWhere('lname', 'LIKE', "%$id%")
-                    ->orWhere('phone_no_primary', $id)
-                    ->orWhere('digital_address', $id);
+            ->where(function ($query) use ($uuid) {
+                $query->whereUuidOrId($uuid)
+                    ->orWhere('erms_id', $uuid)
+                    ->orWhere('tin_no', $uuid)
+                    ->orWhere('fname', 'LIKE', "%$uuid%")
+                    ->orWhere('lname', 'LIKE', "%$uuid%")
+                    ->orWhere('phone_no_primary', $uuid)
+                    ->orWhere('digital_address', $uuid);
             })->get();
 
         if (count($customer) == 0) {
@@ -172,10 +176,13 @@ class CustomerController extends Controller
         ]);
     }
 
-    public function update(UpdateCustomerRequest $request, $id)
+    public function update(UpdateCustomerRequest $request, $uuid)
     {
-        $customer = Owner::where('erms_id', $id)
-            ->orWhere('id', $id)
+        $customer = Owner::query()
+            ->where(function ($query) use ($uuid) {
+                $query->whereUuidOrId($uuid)
+                    ->orWhere('erms_id', $uuid);
+            })
             ->first();
 
         if (empty($customer)) {
@@ -200,7 +207,7 @@ class CustomerController extends Controller
         ]);
     }
 
-    public function globalSearch($id)
+    public function globalSearch($uuid)
     {
         $customer = Owner::with([
             'properties.customer:id,erms_id,fname,lname,phone_no_primary,email,tin_no',
@@ -209,13 +216,14 @@ class CustomerController extends Controller
             'properties.polygon.block.division',
             'properties.polygon:id,cntr_x_coord,cntr_y_coord,block_id',
         ])
-            ->where(function ($query) use ($id) {
-                $query->where('erms_id', $id)
-                    ->orWhere('tin_no', $id)
-                    ->orWhere('fname', 'LIKE', "%$id%")
-                    ->orWhere('lname', 'LIKE', "%$id%")
-                    ->orWhere('phone_no_primary', $id)
-                    ->orWhere('digital_address', $id);
+            ->where(function ($query) use ($uuid) {
+                $query->whereUuidOrId($uuid)
+                    ->orWhere('erms_id', $uuid)
+                    ->orWhere('tin_no', $uuid)
+                    ->orWhere('fname', 'LIKE', "%$uuid%")
+                    ->orWhere('lname', 'LIKE', "%$uuid%")
+                    ->orWhere('phone_no_primary', $uuid)
+                    ->orWhere('digital_address', $uuid);
             })
             ->get();
 
@@ -235,12 +243,13 @@ class CustomerController extends Controller
             'polygon.block.division',
             'polygon:id,cntr_x_coord,cntr_y_coord,block_id',
         ])
-            ->where(function ($query) use ($id) {
-                $query->where('erms_id', $id)
-                    ->orWhere('account_no', $id)
-                    ->orWhere('digitaladdress', $id)
-                    ->orWhere('streetname', 'LIKE', "%$id%")
-                    ->orWhere('location', 'LIKE', "%$id%");
+            ->where(function ($query) use ($uuid) {
+                $query->whereUuidOrId($uuid)
+                    ->orWhere('erms_id', $uuid)
+                    ->orWhere('account_no', $uuid)
+                    ->orWhere('digitaladdress', $uuid)
+                    ->orWhere('streetname', 'LIKE', "%$uuid%")
+                    ->orWhere('location', 'LIKE', "%$uuid%");
             })
             ->get();
 

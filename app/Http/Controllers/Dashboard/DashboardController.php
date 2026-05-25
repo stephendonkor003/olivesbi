@@ -16,6 +16,7 @@ use App\Models\Payment;
 use App\Models\Property;
 use App\Models\User;
 use App\Models\Zone;
+use App\Support\OlivesAccountTier;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -607,7 +608,7 @@ class DashboardController extends Controller
                 })
                 ->join('assemblies', 'payments.assembly_code', '=', 'assemblies.assembly_code')
                 ->join('bills', 'payments.bills_id', '=', 'bills.bills_id')
-                ->join('properties', 'bills.property_id', '=', 'properties.id')
+                ->join('properties', 'bills.property_id', '=', 'properties.uuid')
                 ->join('entity_owners', 'properties.owner_id', '=', 'entity_owners.erms_id')
                 ->selectRaw('
                 bills.property_id as id,
@@ -636,7 +637,7 @@ class DashboardController extends Controller
                 })
                 ->join('assemblies', 'payments.assembly_code', '=', 'assemblies.assembly_code')
                 ->join('bills', 'payments.bills_id', '=', 'bills.bills_id')
-                ->join('businesses', 'bills.business_id', '=', 'businesses.id')
+                ->join('businesses', 'bills.business_id', '=', 'businesses.uuid')
                 ->join('entity_owners', 'businesses.owner_id', '=', 'entity_owners.erms_id')
                 ->selectRaw('
                 bills.business_id as id,
@@ -680,8 +681,8 @@ class DashboardController extends Controller
                 })
                 ->join('assemblies', 'payments.assembly_code', '=', 'assemblies.assembly_code')
                 ->join('bills', 'payments.bills_id', '=', 'bills.bills_id')
-                ->leftJoin('properties', 'bills.property_id', '=', 'properties.id')
-                ->leftJoin('businesses', 'bills.business_id', '=', 'businesses.id')
+                ->leftJoin('properties', 'bills.property_id', '=', 'properties.uuid')
+                ->leftJoin('businesses', 'bills.business_id', '=', 'businesses.uuid')
                 ->leftJoin('divisions', function ($join) {
                     $join->on('properties.id', '=', 'divisions.id')
                         ->orOn('businesses.id', '=', 'divisions.id');
@@ -1291,6 +1292,10 @@ class DashboardController extends Controller
 
     public function Mybills(Request $request)
     {
+        if ($this->isOlivesAccountHolder($request->user())) {
+            return redirect()->route('dashboard.olives-account.bills');
+        }
+
         if (auth()->user()->can('dashboards.operational')) {
             $totalBusinesses = Business::query()
                 ->when(! empty($request->user()->regional_code), function ($query) use ($request) {
@@ -1834,6 +1839,10 @@ class DashboardController extends Controller
 
     public function Myproperties(Request $request)
     {
+        if ($this->isOlivesAccountHolder($request->user())) {
+            return redirect()->route('dashboard.olives-account.properties');
+        }
+
         if (auth()->user()->can('dashboards.operational')) {
             $totalBusinesses = Business::query()
                 ->when(! empty($request->user()->regional_code), function ($query) use ($request) {
@@ -2374,6 +2383,10 @@ class DashboardController extends Controller
 
     public function Mybusiness(Request $request)
     {
+        if ($this->isOlivesAccountHolder($request->user())) {
+            return redirect()->route('dashboard.olives-account.businesses');
+        }
+
         if (auth()->user()->can('dashboards.operational')) {
             $totalBusinesses = Business::query()
                 ->when(! empty($request->user()->regional_code), function ($query) use ($request) {
@@ -2911,6 +2924,10 @@ class DashboardController extends Controller
 
     public function Mypaymenthistory(Request $request)
     {
+        if ($this->isOlivesAccountHolder($request->user())) {
+            return redirect()->route('dashboard.olives-account.payments');
+        }
+
         if (auth()->user()->can('dashboards.operational')) {
             $totalBusinesses = Business::query()
                 ->when(! empty($request->user()->regional_code), function ($query) use ($request) {
@@ -3548,7 +3565,7 @@ class DashboardController extends Controller
                 $query->where('payments.assembly_code', $request->user()->assembly_code);
             })
             ->join('bills', 'payments.bills_id', '=', 'bills.bills_id')
-            ->join('properties', 'bills.property_id', '=', 'properties.id')
+            ->join('properties', 'bills.property_id', '=', 'properties.uuid')
             ->join('entity_owners', 'properties.owner_id', '=', 'entity_owners.erms_id')
             ->join('assemblies', 'properties.assembly_code', '=', 'assemblies.assembly_code')
             ->selectRaw('
@@ -3577,7 +3594,7 @@ class DashboardController extends Controller
                 $query->where('payments.assembly_code', $request->user()->assembly_code);
             })
             ->join('bills', 'payments.bills_id', '=', 'bills.bills_id')
-            ->join('businesses', 'bills.business_id', '=', 'businesses.id')
+            ->join('businesses', 'bills.business_id', '=', 'businesses.uuid')
             ->join('entity_owners', 'businesses.owner_id', '=', 'entity_owners.erms_id')
             ->join('assemblies', 'businesses.assembly_code', '=', 'assemblies.assembly_code')
             ->selectRaw('
@@ -3905,8 +3922,8 @@ class DashboardController extends Controller
             })
             ->join('bills', 'payments.bills_id', '=', 'bills.bills_id')
             ->join('assemblies', 'payments.assembly_code', '=', 'assemblies.assembly_code')
-            ->leftJoin('properties', 'bills.property_id', '=', 'properties.id')
-            ->leftJoin('businesses', 'bills.business_id', '=', 'businesses.id')
+            ->leftJoin('properties', 'bills.property_id', '=', 'properties.uuid')
+            ->leftJoin('businesses', 'bills.business_id', '=', 'businesses.uuid')
             ->leftJoin('divisions', function ($join) {
                 $join->on('properties.id', '=', 'divisions.id')
                     ->orOn('businesses.id', '=', 'divisions.id');
@@ -4373,5 +4390,11 @@ class DashboardController extends Controller
         $citizen->update($request->validated());
 
         return redirect()->route('dashboard.operational')->with('status', 'Rate payer updated successfully!');
+    }
+
+    private function isOlivesAccountHolder(User $user): bool
+    {
+        return $user->access_level === 'customer'
+            || OlivesAccountTier::fromUser($user) === OlivesAccountTier::ACCOUNT;
     }
 }
