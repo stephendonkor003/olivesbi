@@ -5,12 +5,12 @@
     "browserslist": "> 0.05%",
     "devDependencies": {
         "c8": "^7.11.2",
-        "esbuild": "^0.14.38",
+        "esbuild": "^0.28.1",
         "esbuild-plugin-sass": "^1.0.1",
         "jsdom": "^19.0.0",
         "serve": "^14.0.1",
-        "vite": "^2.9.13",
-        "vitest": "^0.9.4"
+        "vite": "^8.0.16",
+        "vitest": "^4.1.9"
     },
     "scripts": {
         "test": "vitest run --coverage",
