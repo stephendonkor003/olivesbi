@@ -9,7 +9,7 @@
   "module": "dist/sweetalert2.esm.all.js",
   "types": "sweetalert2.d.ts",
   "devDependencies": {
-    "@babel/core": "^7.19.6",
+    "@babel/core": "^8.0.1",
     "@babel/preset-env": "^7.19.4",
     "@rollup/plugin-babel": "^6.0.2",
     "@rollup/plugin-terser": "^0.4.0",
@@ -20,14 +20,14 @@
     "eslint-plugin-cypress": "^4.0.0",
     "eslint-plugin-jsdoc": "^50.0.0",
     "eslint-plugin-no-unsanitized": "^4.0.1",
-    "jquery": "^3.6.1",
+    "jquery": "^4.0.0",
     "playwright-webkit": "^1.37.1",
     "prettier": "^3.0.0",
     "rollup": "^4.0.0",
     "sass": "^1.55.0",
     "stylelint": "^16.0.0",
     "typescript": "4.7.4",
-    "vite": "^5.0.0",
+    "vite": "^8.0.16",
     "zx": "^8.0.0"
   },
   "devDependenciesComments": {
