@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\Bill;
 
+use App\Actions\SMS\SendSensitiveSMS;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\API\Bill\IssueBillRequest;
 use App\Http\Requests\API\OTP\SendOTPRequest;
@@ -83,12 +84,12 @@ class BillController extends Controller
     public function show($uuid)
     {
         $bill = Bill::with([
-                'property.polygon.block.division',
-                'property.polygon:id,cntr_x_coord,cntr_y_coord,block_id',
-                'business.polygon:id,cntr_x_coord,cntr_y_coord,block_id',
-                'assembly',
-                'payments',
-            ])
+            'property.polygon.block.division',
+            'property.polygon:id,cntr_x_coord,cntr_y_coord,block_id',
+            'business.polygon:id,cntr_x_coord,cntr_y_coord,block_id',
+            'assembly',
+            'payments',
+        ])
             ->where(function ($query) use ($uuid) {
                 $query->whereUuidOrId($uuid)
                     ->orWhere('bills_id', $uuid);
@@ -234,6 +235,7 @@ class BillController extends Controller
 
     public function sendOTP(SendOTPRequest $request)
     {
+        SendSensitiveSMS::ensureAvailable();
         $otp = mt_rand(100000, 999999);
         $ownerID = '';
         $bill = Bill::where('bills_id', $request->bills_id)->first();

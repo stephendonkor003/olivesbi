@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\Auth;
 
+use App\Actions\SMS\SendSensitiveSMS;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\API\Auth\ChangePasswordRequest as AuthChangePasswordRequest;
 use App\Http\Requests\API\Auth\LoginRequest;
@@ -10,6 +11,7 @@ use App\Http\Requests\API\ChangePassword\SendOTPRequest;
 use App\Jobs\OTP\SendPasswordChangeOTPSMS;
 use App\Models\User;
 use App\Support\OlivesCardNumber;
+use App\Support\PasswordResetCodes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -75,6 +77,7 @@ class LoginController extends Controller
             ], 422);
         }
 
+        SendSensitiveSMS::ensureAvailable();
         dispatch(new SendPasswordChangeOTPSMS($user));
 
         return response()->json([
@@ -84,7 +87,7 @@ class LoginController extends Controller
 
     public function changePassword(ChangePasswordRequest $request)
     {
-        \App\Support\PasswordResetCodes::reset($request->validated('code'), $request->validated('password'));
+        PasswordResetCodes::reset($request->validated('code'), $request->validated('password'));
 
         return response()->json([
             'message' => 'Password changed successfully',

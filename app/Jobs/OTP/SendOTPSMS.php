@@ -2,7 +2,7 @@
 
 namespace App\Jobs\OTP;
 
-use App\Actions\SMS\SendSMS;
+use App\Actions\SMS\SendSensitiveSMS;
 use App\Models\OTP;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -29,7 +29,8 @@ class SendOTPSMS implements ShouldQueue
      */
     public function handle(): void
     {
-        $otp = mt_rand(100000, 999999);
+        SendSensitiveSMS::ensureAvailable();
+        $otp = random_int(100000, 999999);
 
         $data = [
             'citizen_id' => $this->citizen->id,
@@ -42,6 +43,11 @@ class SendOTPSMS implements ShouldQueue
 
         $phone = $this->citizen->telephone_number;
 
-        SendSMS::sendSMS($phone, $msg);
+        try {
+            SendSensitiveSMS::sendSMS($phone, $msg);
+        } catch (\Throwable $exception) {
+            $otpData->delete();
+            throw $exception;
+        }
     }
 }

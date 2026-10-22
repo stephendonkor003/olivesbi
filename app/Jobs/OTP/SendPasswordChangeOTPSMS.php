@@ -2,8 +2,9 @@
 
 namespace App\Jobs\OTP;
 
-use App\Actions\SMS\SendSMS;
+use App\Actions\SMS\SendSensitiveSMS;
 use App\Models\OTP;
+use App\Support\PasswordResetCodes;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -29,12 +30,13 @@ class SendPasswordChangeOTPSMS implements ShouldQueue
      */
     public function handle(): void
     {
+        SendSensitiveSMS::ensureAvailable();
         OTP::query()->where('user_id', $this->user->id)->where('type', 'password')->delete();
 
         do {
             $otp = random_int(100000, 999999);
         } while (OTP::query()->where('type', 'password')->where('code', $otp)
-            ->where('created_at', '>=', now()->subMinutes(\App\Support\PasswordResetCodes::LIFETIME_MINUTES))->exists());
+            ->where('created_at', '>=', now()->subMinutes(PasswordResetCodes::LIFETIME_MINUTES))->exists());
 
         $data = [
             'user_id' => $this->user->id,
@@ -48,6 +50,11 @@ class SendPasswordChangeOTPSMS implements ShouldQueue
 
         $phone = $this->user->phone;
 
-        SendSMS::sendSMS($phone, $msg);
+        try {
+            SendSensitiveSMS::sendSMS($phone, $msg);
+        } catch (\Throwable $exception) {
+            $otpData->delete();
+            throw $exception;
+        }
     }
 }

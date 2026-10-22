@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Citizens;
 
+use App\Actions\SMS\SendSensitiveSMS;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Activate\ActivateCitizenRequest;
 use App\Http\Requests\Activate\ResendOTPRequest;
@@ -361,6 +362,7 @@ class CitizenController extends Controller
             return redirect()->route('citizens.resend')->with('error', 'Telephone number does not exist for any of the account!');
         }
 
+        SendSensitiveSMS::ensureAvailable();
         dispatch(new SendOTPSMS($customer));
 
         return redirect()->route('citizens.activate')->with('status', 'OTP resent successfully');

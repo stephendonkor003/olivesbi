@@ -2,7 +2,7 @@
 
 namespace App\Jobs\OTP;
 
-use App\Actions\SMS\SendSMS;
+use App\Actions\SMS\SendSensitiveSMS;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -39,6 +39,6 @@ class SendOTPBillSMS implements ShouldQueue
             }
         }
 
-        SendSMS::sendSMS($phone, $msg);
+        SendSensitiveSMS::sendSMS($phone, $msg);
     }
 }

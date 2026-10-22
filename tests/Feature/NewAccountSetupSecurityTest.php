@@ -216,7 +216,9 @@ class NewAccountSetupSecurityTest extends TestCase
         $user->forceFill(['change_password' => true])->save();
         $existing = $this->user();
         $originalPassword = $existing->password;
-        Sms::shouldReceive('send')->once()->andReturnNull();
+        config(['sms.default' => 'mnotify', 'sms.from' => 'Synthetic',
+            'sms.senders.mnotify' => ['sender' => 'mnotify', 'api_key' => 'test-only-network-key']]);
+        Http::fake(['https://api.mnotify.com/*' => Http::response(['status' => 'success'])]);
         (new SendPasswordChangeOTPSMS($user))->handle();
         $code = OTP::where('user_id', $user->id)->where('type', 'password')->firstOrFail();
         $chosen = 'New-synthetic-setup-password-123';
