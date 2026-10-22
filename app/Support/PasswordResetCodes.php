@@ -36,7 +36,11 @@ class PasswordResetCodes
                 self::invalid();
             }
 
-            $user->forceFill(['password' => Hash::make($password), 'remember_token' => Str::random(60)])->save();
+            $changes = ['password' => Hash::make($password), 'remember_token' => Str::random(60)];
+            if ($user->change_password) {
+                $changes['change_password'] = false;
+            }
+            $user->forceFill($changes)->save();
             OTP::query()->where('user_id', $user->id)->where('type', 'password')->delete();
             $user->tokens()->delete();
 

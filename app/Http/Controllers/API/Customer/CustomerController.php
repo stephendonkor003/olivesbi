@@ -9,7 +9,7 @@ use App\Jobs\Registration\SendRegistrationReminder;
 use App\Models\Owner;
 use App\Models\Property;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
+use App\Support\NewAccountSetup;
 
 class CustomerController extends Controller
 {
@@ -47,7 +47,7 @@ class CustomerController extends Controller
             'name' => $data['first_name'].' '.$data['last_name'],
             'email' => $data['email'] ?? $erms_id.'@erms.com',
             'phone' => $data['phone_no_primary'],
-            'password' => Hash::make(env('DEFAULT_PASSWORD')),
+            'password' => NewAccountSetup::passwordHash(),
             'access_level' => 'customer',
             'status' => 'Active',
             'erms_id' => $data['erms_id'],
@@ -72,7 +72,7 @@ class CustomerController extends Controller
         return response()->json([
             'message' => 'Customer created successfully',
             'data' => $customer,
-        ]);
+        ] + NewAccountSetup::response());
     }
 
     public function frontstore(CreateCustomerRequest $request)
@@ -98,7 +98,7 @@ class CustomerController extends Controller
             'name' => $data['first_name'].' '.$data['last_name'],
             'email' => $data['email'] ?? $erms_id.'@erms.com',
             'phone' => $data['phone_no_primary'],
-            'password' => Hash::make(env('DEFAULT_PASSWORD')),
+            'password' => NewAccountSetup::passwordHash(),
             'access_level' => 'customer',
             'status' => 'Active',
             'erms_id' => $data['erms_id'],
@@ -123,7 +123,7 @@ class CustomerController extends Controller
         return response()->json([
             'message' => 'Customer created successfully',
             'data' => $customer,
-        ]);
+        ] + NewAccountSetup::response());
     }
 
     public function show($uuid)

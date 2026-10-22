@@ -20,10 +20,13 @@ class SendRegistrationReminder implements ShouldQueue
 
     protected $password;
 
-    public function __construct($citizen, $password)
+    public function __construct($citizen, $password = null)
     {
         $this->citizen = $citizen;
-        $this->password = $password;
+        // Retain the optional legacy argument for existing callers without
+        // serializing or sending a credential. Previously queued jobs may still
+        // contain the old property; handle() deliberately never reads it.
+        $this->password = null;
     }
 
     /**
@@ -31,13 +34,16 @@ class SendRegistrationReminder implements ShouldQueue
      */
     public function handle(): void
     {
-        $msg = 'Hello '.$this->citizen->fname.",\n";
-        $msg .= 'Thanks for registering on ERMS Plus, your Account No. is: '.$this->citizen->erms_id.".\n";
-        $msg .= 'Your Password is: '.$this->password."\n";
+        $name = $this->citizen->fname ?? $this->citizen->first_name;
+        $account = $this->citizen->erms_id ?? $this->citizen->account_number;
+        $phone = $this->citizen->phone_no_primary ?? $this->citizen->telephone_number;
+        $msg = 'Hello '.$name.",\n";
+        $msg .= 'Thanks for registering on ERMS Plus, your Account No. is: '.$account.".\n";
+        $msg .= 'Set or reset your password at '.route('auth.sendOTP').".\n";
+        $msg .= "Request a one-time code using your registered phone number.\n";
         $msg .= 'You can use your phone number or email submitted during registration to login at '.config('erms.website')."\n";
-        $msg .= "You will be required to change your password after logging in the first time.\n";
         $msg .= 'For further inquiries, please call this number '.config('erms.contact');
 
-        SendSMS::sendSMS($this->citizen->phone_no_primary, $msg);
+        SendSMS::sendSMS($phone, $msg);
     }
 }

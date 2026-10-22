@@ -9,9 +9,8 @@ use App\Jobs\Registration\SendRegistrationReminder;
 use App\Models\Assembly;
 use App\Models\Owner;
 use App\Models\User;
+use App\Support\NewAccountSetup;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class OwnerController extends Controller
@@ -175,13 +174,11 @@ class OwnerController extends Controller
         $data['fname'] = $request->input('first_name');
         $data['lname'] = $request->input('last_name');
 
-        $password = Str::random(8);
-
         $userLoginData = [
             'name' => $data['first_name'].' '.$data['last_name'],
             'email' => $data['email'] ?? $erms_id.'@erms.com',
             'phone' => $data['phone_no_primary'],
-            'password' => Hash::make($password),
+            'password' => NewAccountSetup::passwordHash(),
             'access_level' => 'customer',
             'status' => 'Active',
             'erms_id' => $data['erms_id'],
@@ -211,7 +208,7 @@ class OwnerController extends Controller
         if (! empty($userData)) {
             $owner = Owner::create($data);
 
-            dispatch(new SendRegistrationReminder($owner, $password));
+            SendRegistrationReminder::dispatch($owner)->afterCommit();
 
         }
 

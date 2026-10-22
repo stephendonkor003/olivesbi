@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Reset Password — Olives BI</title>
+    <title>Set or Reset Password — Olives BI</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -184,7 +184,7 @@
                 <div class="wordmark">Olives <em>BI</em></div>
             </a>
 
-            <div class="panel-headline">Reset your<br>password securely.</div>
+            <div class="panel-headline">Set or reset your<br>password securely.</div>
             <p class="panel-sub">We'll send a one-time code to your registered phone number. Follow the three steps to set a new password.</p>
 
             <div class="reset-steps">
@@ -223,8 +223,8 @@
         <div class="auth-card">
             <div class="step-badge"><i class="bi bi-phone"></i> Step 1 of 2</div>
             <div class="ac-icon">🔑</div>
-            <div class="ac-title">Forgot password?</div>
-            <p class="ac-sub">Enter your registered phone number and we'll send you a one-time code to reset your password.</p>
+            <div class="ac-title">Set or reset your password</div>
+            <p class="ac-sub">New account or forgotten password? Enter your registered phone number to request a one-time code and choose your password.</p>
 
             @if (session()->has('status'))
                 <div class="auth-alert success">

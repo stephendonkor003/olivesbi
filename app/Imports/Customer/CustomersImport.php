@@ -5,7 +5,7 @@ namespace App\Imports\Customer;
 use App\Models\Citizen;
 use App\Models\CustomerType;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
+use App\Support\NewAccountSetup;
 use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
@@ -45,7 +45,7 @@ class CustomersImport implements SkipsEmptyRows, ToModel, WithEvents, WithHeadin
             'name' => $row['first_name'].' '.($row['last_name'] ?? ''),
             'email' => $accountNumber.'@iprs.com',
             'phone' => $row['phone'] ?? null,
-            'password' => Hash::make(env('DEFAULT_PASSWORD')),
+            'password' => NewAccountSetup::passwordHash(),
             'access_level' => 'customer',
             'status' => 'Active',
             'created_by' => $this->created_by,

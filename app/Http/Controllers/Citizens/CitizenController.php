@@ -31,6 +31,7 @@ use App\Models\Role;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Models\Zone;
+use App\Support\NewAccountSetup;
 use App\Support\OlivesAccountTier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -180,7 +181,7 @@ class CitizenController extends Controller
                 'name' => $data['first_name'].' '.$data['last_name'],
                 'email' => $data['account_number'],
                 'phone' => $data['telephone_number'],
-                'password' => Hash::make(config('erms.default_password')),
+                'password' => NewAccountSetup::passwordHash(),
                 'access_level' => 'customer',
                 'status' => 'Active',
             ];
@@ -202,7 +203,7 @@ class CitizenController extends Controller
                 $customer = Citizen::create($data);
             }
 
-            dispatch(new SendRegistrationReminder($customer));
+            SendRegistrationReminder::dispatch($customer)->afterCommit();
 
             $serviceData = [
                 'user_id' => $request->user()->id,
@@ -311,7 +312,7 @@ class CitizenController extends Controller
             );
         }
 
-        dispatch(new SendRegistrationReminder($customer));
+        SendRegistrationReminder::dispatch($customer)->afterCommit();
         // dispatch(new SendOTPSMS($customer))->delay(now()->addSeconds(5));
 
         return redirect()->route('auth.index')->with('status', 'Account created successfully. You can sign in with your email, phone number, or Olives account card.');
@@ -341,7 +342,7 @@ class CitizenController extends Controller
             $customer->update(['status' => 'Active']);
             $user->update(['status' => 'Active']);
 
-            dispatch(new SendRegistrationReminder($customer));
+            SendRegistrationReminder::dispatch($customer)->afterCommit();
         }
 
         return redirect()->route('auth.index')->with('status', 'Account activated successfully');
