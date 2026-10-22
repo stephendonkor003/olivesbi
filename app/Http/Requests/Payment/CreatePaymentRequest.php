@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Payment;
 
+use App\Support\PaymentAmounts;
+use App\Support\UserAccountAccess;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CreatePaymentRequest extends FormRequest
@@ -11,7 +13,9 @@ class CreatePaymentRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user() && $this->user()->status === 'Active'
+            && ($this->input('payment_mode') !== 'cash'
+                || UserAccountAccess::hasManagementPermission($this->user(), 'payments.create'));
     }
 
     /**
@@ -25,7 +29,8 @@ class CreatePaymentRequest extends FormRequest
             'bills_id' => ['required', 'string', 'exists:bills,bills_id'],
             'payment_mode' => ['required', 'string', 'in:cash,momo'],
             'payment_source' => ['nullable', 'string'],
-            'amount' => ['required', 'numeric'],
+            'assembly_code' => ['sometimes', 'string', 'exists:assemblies,assembly_code'],
+            'amount' => ['bail', 'required', 'numeric', PaymentAmounts::rule()],
             'phone' => ['required_if:payment_mode,momo', 'nullable', 'string'],
             'network' => ['required_if:payment_mode,momo', 'nullable', 'string', 'in:MTN,TGO,VDF'],
             'receipt' => ['required_if:payment_mode,cash', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],

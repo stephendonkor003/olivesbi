@@ -10,9 +10,12 @@ use App\Models\AuditTrail;
 use App\Models\Owner;
 use App\Models\Payment;
 use App\Models\ServiceRequest;
+use App\Support\PaymentAmounts;
+use App\Support\PaymentRecordAccess;
+use App\Support\PaystackPaymentSettlement;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
@@ -33,6 +36,10 @@ class PaymentController extends Controller
 
     public function makePayment(CreatePaymentRequest $request)
     {
+        $bill = PaymentRecordAccess::creationBill($request);
+        if ($request->input('payment_mode') === 'momo') {
+            abort_unless(is_string(config('services.paystack.secret_key')) && trim(config('services.paystack.secret_key')) !== '', 503, 'Payment provider unavailable');
+        }
         do {
             $transactionID = str_pad(mt_rand(1, 999999999999), 12, '0', STR_PAD_LEFT);
         } while (Payment::where('transaction_id', $transactionID)->exists());
@@ -40,26 +47,32 @@ class PaymentController extends Controller
         if ($request->hasFile('receipt')) {
             $image = $request->file('receipt');
             $image_name = Payment::generateImageFileName();
-            $image_name = $image_name.'.'.$image->getClientOriginalExtension();
+            $extension = $image->guessExtension();
+            abort_unless(in_array($extension, ['jpg', 'jpeg', 'png', 'pdf'], true), 422, 'Unsupported receipt');
+            $image_name = $image_name.'.'.$extension;
             $receiptDestinationPath = storage_path('app/public/images/receipt');
             $image->move($receiptDestinationPath, $image_name);
         }
 
         $paymentData = [
-            'bills_id' => $request->input('bills_id'),
-            'amount' => $request->input('amount'),
+            'bills_id' => $bill->bills_id,
+            'amount' => PaymentAmounts::decimal($request->input('amount')),
             'payment_mode' => $request->input('payment_mode'),
             'payment_source' => 'Mobile',
             'phone' => $request->input('phone'),
             'network' => $request->input('network'),
             'transaction_id' => $request->input('payment_mode') == 'momo' ? $transactionID : null,
             'transaction_status' => $request->input('payment_mode') == 'momo' ? 'Pending' : 'Success',
-            'assembly_code' => $request->input('assembly_code'),
+            'assembly_code' => $bill->assembly_code,
             'receipt' => $image_name ?? null,
             'created_by' => $request->user()->id ?? null,
         ];
 
-        $payment = Payment::create($paymentData);
+        $payment = DB::transaction(function () use ($request, $paymentData) {
+            $bill = PaymentRecordAccess::creationBill($request, true);
+            $paymentData['assembly_code'] = $bill->assembly_code;
+            return Payment::create($paymentData);
+        });
 
         if ($request->input('payment_mode') == 'momo') {
             $amount = $payment->amount;
@@ -67,10 +80,10 @@ class PaymentController extends Controller
 
             $response = MakePayment::acceptPayment($request->user(), $amount, $reference, $payment->phone, $payment->network);
 
-            if ($response['status'] === true) {
+            if (($response['status'] ?? null) === true
+                && ($response['data']['reference'] ?? null) === $reference) {
 
                 $data = [
-                    'transaction_id' => $response['data']['reference'],
                     'prompt' => $response['data']['display_text'] ?? null,
                 ];
 
@@ -97,7 +110,7 @@ class PaymentController extends Controller
                 AuditTrail::create($auditTrailData);
 
                 $paymentData = $payment->toArray();
-                $paymentData['send_otp'] = ($response['data']['status'] === 'send_otp');
+                $paymentData['send_otp'] = (($response['data']['status'] ?? null) === 'send_otp');
 
                 return response()->json([
                     'message' => 'Payment processed successfully. '.$data['prompt'],
@@ -228,80 +241,64 @@ class PaymentController extends Controller
 
     public function handlePaymentPaystackWebhook(Request $request)
     {
-        $payload = $request->all();
-        $event = $payload['event'] ?? null;
-
-        // Log the full payload
-        Log::info('Paystack Webhook Payload:', $payload);
-
-        if ($event === 'charge.success') {
-            $data = $payload['data'];
-            $reference = $data['reference'] ?? null;
-            $status = $data['status'] ?? null;
-
-            if ($reference) {
-                $payment = Payment::where('transaction_id', $reference)->first();
-
-                if ($payment) {
-                    $payment->transaction_status = ($status === 'success') ? 'Success' : 'Failed';
-                    $payment->save();
-
-                    Log::info("Payment status updated for reference: {$reference} to status: {$payment->transaction_status}");
-                } else {
-                    Log::warning("Payment not found for reference: {$reference}");
-                }
-            }
+        $body = $request->getContent();
+        abort_unless(PaystackPaymentSettlement::hasValidSignature($body, $request->header('x-paystack-signature')), 403);
+        try {
+            $payload = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return response()->json(['message' => 'Invalid event'], 400);
         }
-
-        return response()->json(['status' => 'success'], 200);
+        if (! is_array($payload)) {
+            return response()->json(['message' => 'Invalid event'], 400);
+        }
+        if (($payload['event'] ?? null) !== 'charge.success') {
+            return response()->json(['status' => 'success']);
+        }
+        $data = $payload['data'] ?? null;
+        $reference = is_array($data) ? ($data['reference'] ?? null) : null;
+        if (! is_string($reference) || $reference === '') {
+            return response()->json(['message' => 'Invalid payment evidence'], 422);
+        }
+        if (! Payment::where('transaction_id', $reference)->exists()) {
+            // An authenticated event for another integration must not cause endless retries.
+            return response()->json(['status' => 'success']);
+        }
+        // A valid signature authenticates the event, not its association to our bill.
+        $payment = PaystackPaymentSettlement::settle($reference, $data);
+        return $payment ? response()->json(['status' => 'success'])
+            : response()->json(['message' => 'Payment evidence did not match'], 422);
     }
 
     public function confirmPayment(ConfirmPaymentRequest $request)
     {
         $payment = Payment::whereUuidOrId($request->input('payment_id'))->first();
-
-        if (empty($payment)) {
-            return response()->json([
-                'message' => 'Payment details not found',
-            ], 422);
-        }
-
-        $response = Http::withToken(config('services.paystack.secret_key'))
+        abort_unless($payment, 422, 'Payment details not found');
+        abort_unless(PaymentRecordAccess::mayConfirm($request->user(), $payment), 403);
+        abort_unless($payment->payment_mode === 'momo' && strtolower((string) $payment->transaction_status) === 'pending'
+            && is_string($payment->transaction_id) && $payment->transaction_id !== '', 422, 'Payment is not awaiting confirmation');
+        $reference = $payment->transaction_id;
+        $key = config('services.paystack.secret_key');
+        abort_unless(is_string($key) && trim($key) !== '', 503, 'Payment provider unavailable');
+        $response = Http::withToken($key)->timeout(15)->connectTimeout(5)
             ->post('https://api.paystack.co/charge/submit_otp', [
-                'otp' => $request->input('otp'),
-                'reference' => $payment->transaction_id,
+                'otp' => $request->input('otp'), 'reference' => $reference,
             ]);
-
-        if ($response->successful()) {
-            $data = $response->json();
-
-            if ($data['status'] === true) {
-
-                if (empty($response['data']['reference']) || empty($response['data']['display_text'])) {
-                    return response()->json([
-                        'message' => 'The otp is invalid or the otp has already been confirmed',
-                    ], 422);
-                }
-
-                $data2 = [
-                    'transaction_id' => $response['data']['reference'],
-                    'prompt' => $response['data']['display_text'],
-                ];
-
-                $payment->update($data2);
-
-                $paymentData = $payment->toArray();
-                $paymentData['send_otp'] = ($response['data']['status'] === 'send_otp');
-
-                return response()->json([
-                    'message' => 'Payment processed successfully. '.$data2['prompt'],
-                    'data' => $paymentData,
-                ]);
-            } else {
-                return response()->json([
-                    'message' => 'An error occured during otp confirmation',
-                ], 422);
-            }
+        $data = $response->json();
+        if (! $response->successful() || ! is_array($data) || ($data['status'] ?? null) !== true
+            || ($data['data']['reference'] ?? null) !== $reference
+            || ! is_string($data['data']['display_text'] ?? null) || $data['data']['display_text'] === '') {
+            return response()->json(['message' => 'The otp is invalid or the otp has already been confirmed'], 422);
         }
+        $payment = DB::transaction(function () use ($payment, $request, $reference, $data) {
+            $current = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
+            abort_unless(PaymentRecordAccess::mayConfirm($request->user(), $current), 403);
+            abort_unless($current->payment_mode === 'momo' && strtolower((string) $current->transaction_status) === 'pending'
+                && $current->transaction_id === $reference, 422, 'Payment no longer awaits confirmation');
+            $current->update(['prompt' => $data['data']['display_text']]);
+            return $current;
+        });
+        $paymentData = $payment->toArray();
+        $paymentData['send_otp'] = ($data['data']['status'] ?? null) === 'send_otp';
+        return response()->json(['message' => 'Payment processed successfully. '.$payment->prompt, 'data' => $paymentData]);
     }
 }

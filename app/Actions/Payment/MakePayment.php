@@ -2,6 +2,8 @@
 
 namespace App\Actions\Payment;
 
+use App\Support\PaymentAmounts;
+
 use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -52,7 +54,7 @@ class MakePayment
         $paystackEmail = $user->email ?: "{$phone}@ermsplus.africa";
 
         $payload = [
-            'amount' => $amount * 100,
+            'amount' => PaymentAmounts::minor($amount),
             'email' => $paystackEmail,
             'currency' => 'GHS',
             'reference' => $reference,
@@ -146,84 +148,6 @@ class MakePayment
 
         return response('Webhook received', 200);
     }
-
-    // public static function acceptPayment($amount, $transactionId, $subscriberNumber, $network)
-    // {
-    //     try {
-    //         $apiUsernameProd = "level679ceeb70a0e9";
-    //         $apiKeyProd = "MjkzMjM5M2M0MmFjNjM3ZGEzZDhiNjdiOTU3NmNiMTE=";
-
-    //         $merchantID = "TTM-00010135";
-    //         $callback_url = route('payments.callback');
-
-    //         $base64Credentials = base64_encode("$apiUsernameProd:$apiKeyProd");
-
-    //         $url = "https://prod2.theteller.net/process/transaction/async";
-
-    //         $headers = [
-    //             'Content-Type' => 'application/json',
-    //             'Authorization' => "Basic $base64Credentials",
-    //             'Cache-Control' => 'no-cache',
-    //             "request-id" =>  $transactionId
-    //         ];
-
-    //         $payload = [
-    //             "amount" =>  $amount,
-    //             "processing_code" => "000200",
-    //             "transaction_id" => (string) $transactionId,
-    //             "desc" => "Rate payer bill payment",
-    //             "merchant_id" => $merchantID,
-    //             "callback_url" => $callback_url,
-    //             "subscriber_number" => $subscriberNumber,
-    //             "r-switch" => $network,
-    //             "reference" => "Bill Payment",
-    //             "merchant_data" => json_encode([]),
-    //         ];
-
-    //         \Log::info('Payment Payload:', $payload);
-
-    //         $response = Http::withHeaders($headers)->post($url, $payload)->json();
-
-    //         return $response;
-    //     } catch (\Exception $ex) {
-    //         return $ex->getMessage();
-    //     }
-    // }
-
-    // public static function acceptPayment($amount, $phone, $network)
-    // {
-    //     try {
-    //         $client = new \GuzzleHttp\Client();
-
-    //         $apiKey = '$2a$10$YKxaeD8IwH1SoCa0VrCHwuKXAELu8h2HFd8AsyPBs4k1YBovs2UhS';
-    //         $apiId = '1647';
-
-    //         $response = $client->post('https://api.reddeonline.com/v1/receive', [
-    //             'headers' => [
-    //                 'ApiKey' => $apiKey,
-    //                 'Accept' => 'application/json',
-    //                 'Content-Type' => 'application/json',
-    //                 'Cache-Control' => 'no-cache'
-    //             ],
-    //             'json' => [
-    //                 'amount' => $amount,
-    //                 'appid' => $apiId,
-    //                 'clientreference' => '123456',
-    //                 'clienttransid' => 'test2025donlinetest',
-    //                 'description' => 'Yearly Bill Payment',
-    //                 'nickname' => 'Yearly Bill Payment',
-    //                 'paymentoption' => $network,
-    //                 'walletnumber' => $phone
-    //             ]
-    //         ]);
-
-    //         $response = json_decode($response->getBody(), true);
-
-    //         return $response;
-    //     } catch (\Exception $ex) {
-    //         return $ex->getMessage();
-    //     }
-    // }
 
     public static function checkPaymentStatus()
     {
