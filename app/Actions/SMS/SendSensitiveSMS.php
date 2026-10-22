@@ -75,7 +75,7 @@ class SendSensitiveSMS
         $required = match ($driver) {
             'mnotify', 'arkesel' => ['api_key'],
             'pywe' => ['public_key', 'secret_key'],
-            'frog_sms' => ['username', 'password', 'service_type', 'message_type'],
+            'frog_sms' => ['username', 'password'],
             default => null,
         };
         if ($required === null || ($driver === 'arkesel' && ($config['sandbox'] ?? false))) {
@@ -84,6 +84,13 @@ class SendSensitiveSMS
         foreach ($required as $key) {
             if (! is_string($config[$key] ?? null) || trim($config[$key]) === '') {
                 return [];
+            }
+        }
+        if ($driver === 'frog_sms') {
+            foreach (['service_type', 'message_type'] as $key) {
+                if ((! is_string($config[$key] ?? null) && ! is_int($config[$key] ?? null)) || (string) $config[$key] === '') {
+                    return [];
+                }
             }
         }
         $from = $from ?: ($driver === 'frog_sms' ? '' : ($config['sender_id'] ?? ''));

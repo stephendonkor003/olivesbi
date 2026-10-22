@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\API\Bill;
 
+use App\Support\UserAccountAccess;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class IssueBillRequest extends FormRequest
@@ -11,19 +13,19 @@ class IssueBillRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return UserAccountAccess::hasManagementPermission($this->user(), 'bills.update');
     }
 
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'bills_id' => ['required', 'string', 'exists:bills,bills_id'],
-            'code' => ['required', 'string', 'exists:otps,code'],
+            'bills_id' => ['required', 'string'],
+            'code' => ['required', 'string', 'digits:6'],
         ];
     }
 }

@@ -190,6 +190,38 @@ class SensitiveOtpTransportSecurityTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_all_supported_network_senders_require_their_success_status_and_preserve_numeric_frog_message_type(): void
+    {
+        $this->forbidSmsLogging();
+        config(['sms.senders.arkesel' => ['sender' => 'arkesel', 'api_key' => 'synthetic-key', 'sandbox' => false],
+            'sms.senders.frog_sms' => ['sender' => 'frog_sms', 'username' => 'synthetic-user', 'password' => 'synthetic-password',
+                'service_type' => 'SMS', 'message_type' => 0]]);
+        $sequence = Http::sequence();
+        foreach (['success', 'sent', 'success', 'ACCEPTED'] as $status) {
+            $sequence->push(['status' => 'provider-error', 'message' => 'synthetic-provider-private-details']);
+            $sequence->push(['status' => $status]);
+        }
+        Http::fake(['*' => $sequence]);
+        foreach (['mnotify' => 'success', 'pywe' => 'sent', 'arkesel' => 'success', 'frog_sms' => 'ACCEPTED'] as $name => $success) {
+            config(['sms.default' => $name]);
+            $user = $this->user();
+            try {
+                (new SendPasswordChangeOTPSMS($user))->handle();
+                $this->fail('A provider error status must not report a delivered code.');
+            } catch (ValidationException $exception) {
+                $this->assertNull($exception->getPrevious());
+                $this->assertStringNotContainsString('synthetic-provider-private-details', json_encode($exception->errors()));
+            }
+            $this->assertSame(0, OTP::where('user_id', $user->id)->count());
+            (new SendPasswordChangeOTPSMS($user))->handle();
+            $this->assertSame(1, OTP::where('user_id', $user->id)->count());
+            if ($name === 'frog_sms') {
+                Http::assertSent(fn ($request) => str_starts_with($request->url(), 'https://frog.wigal.com.gh/')
+                    && $request['smstype'] === 0 && $request['service'] === 'SMS');
+            }
+        }
+    }
+
     private function forbidSmsLogging(): void
     {
         $logger = Mockery::mock(LoggerInterface::class);

@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers\API\Bill;
 
-use App\Actions\SMS\SendSensitiveSMS;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\API\Bill\IssueBillRequest;
 use App\Http\Requests\API\OTP\SendOTPRequest;
 use App\Jobs\OTP\SendOTPBillSMS;
 use App\Models\Bill;
-use App\Models\OTP;
 use App\Models\Owner;
+use App\Support\BillOtpCodes;
 use Illuminate\Http\Request;
 
 class BillController extends Controller
@@ -235,72 +234,23 @@ class BillController extends Controller
 
     public function sendOTP(SendOTPRequest $request)
     {
-        SendSensitiveSMS::ensureAvailable();
-        $otp = mt_rand(100000, 999999);
-        $ownerID = '';
-        $bill = Bill::where('bills_id', $request->bills_id)->first();
-        $existingOTP = OTP::where('bills_id', $request->bills_id)->first();
-
-        if (! $bill) {
-            return response()->json([
-                'message' => 'Bill not found',
-            ], 422);
+        $otp = BillOtpCodes::create($request->user(), $request->validated('bills_id'));
+        try {
+            dispatch(new SendOTPBillSMS($otp));
+        } catch (\Throwable $exception) {
+            BillOtpCodes::discardFailed($otp);
+            throw $exception;
         }
-
-        if (is_null($bill->business_id) && $bill->property) {
-            $ownerID = $bill->property->customer->erms_id ?? 'No owner found';
-        } elseif (is_null($bill->property_id) && $bill->business) {
-            $ownerID = $bill->business->customer->erms_id ?? 'No owner found';
-        }
-
-        $data = [
-            'citizen_id' => $ownerID,
-            'bills_id' => $request->bills_id,
-            'code' => $otp ?? null,
-        ];
-
-        if (! empty($existingOTP)) {
-            $existingOTP->delete();
-        }
-
-        $otp = OTP::create($data);
-
-        dispatch(new SendOTPBillSMS($otp));
 
         return response()->json([
             'message' => 'Bill OTP sent successfully',
-            'data' => $otp,
+            'data' => $otp->only(['id', 'uuid', 'bills_id', 'citizen_id', 'type', 'created_at', 'updated_at']),
         ]);
     }
 
     public function issueBill(IssueBillRequest $request)
     {
-        $bill = Bill::where('bills_id', $request->input('bills_id'))->first();
-        $otp = OTP::where('code', $request->input('code'))->first();
-
-        if (empty($otp)) {
-            return response()->json([
-                'message' => 'Bill OTP code does not exist',
-            ], 422);
-        }
-
-        if (empty($bill)) {
-            return response()->json([
-                'message' => 'Customer with this bill id does not exist',
-            ], 422);
-        }
-
-        if ($bill->issue_bill === 'Yes') {
-            return response()->json([
-                'message' => 'This bill has already been issued to the customer',
-            ], 422);
-        }
-
-        if (! empty($otp)) {
-            $otp->delete();
-        }
-
-        $bill->update(['issue_bill' => 'Yes', 'issued_by' => $request->user()->id]);
+        BillOtpCodes::issue($request->user(), $request->validated('bills_id'), $request->validated('code'));
 
         return response()->json([
             'message' => 'Customer bill issued successfully',
