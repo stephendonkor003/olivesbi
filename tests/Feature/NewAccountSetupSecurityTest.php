@@ -9,6 +9,7 @@ use App\Jobs\Registration\SendRegistrationReminder;
 use App\Models\Citizen;
 use App\Models\OTP;
 use App\Models\Owner;
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
@@ -240,9 +241,12 @@ class NewAccountSetupSecurityTest extends TestCase
 
     private function user(): User
     {
-        return User::create(['name' => 'Existing Synthetic Actor', 'phone' => '0271234567', 'email' => 'actor@example.test',
+        $user = User::create(['name' => 'Existing Synthetic Actor', 'phone' => '0271234567', 'email' => 'actor@example.test',
             'password' => Hash::make('Existing-only-password'), 'access_level' => 'Assembly_Administrator',
             'assembly_code' => 'A', 'regional_code' => 'R', 'status' => 'Active']);
+        $user->givePermissionTo(Permission::findOrCreate('customers.create', 'web'));
+
+        return $user;
     }
 
     private function asToken(User $user): static

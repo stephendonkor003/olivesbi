@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Owner;
 
+use App\Support\OwnerRecordAccess;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -12,13 +14,13 @@ class UpdateOwnerRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return OwnerRecordAccess::mayUpdate($this->user(), $this->route('owner'), $this);
     }
 
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

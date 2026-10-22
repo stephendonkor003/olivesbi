@@ -4,15 +4,18 @@ namespace App\Http\Controllers\API\USSD;
 
 use App\Http\Controllers\Controller;
 use App\Models\Owner;
+use App\Support\OwnerRecordAccess;
+use Illuminate\Http\Request;
 
 class USSDController extends Controller
 {
-    public function customerInfo($phone)
+    public function customerInfo(Request $request, $phone)
     {
-        $customer = Owner::with([
+        $customer = OwnerRecordAccess::visibleOwners(Owner::query(), $request->user())->with([
+            'properties' => fn ($query) => OwnerRecordAccess::visibleAssets($query, $request->user()),
             'properties.polygon.block.division',
             'properties.polygon:id,cntr_x_coord,cntr_y_coord,block_id',
-            'businesses',
+            'businesses' => fn ($query) => OwnerRecordAccess::visibleAssets($query, $request->user()),
             'customerType',
             'user',
         ])

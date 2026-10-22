@@ -10,6 +10,8 @@ use App\Models\Assembly;
 use App\Models\Owner;
 use App\Models\User;
 use App\Support\NewAccountSetup;
+use App\Support\OwnerRecordAccess;
+use App\Support\UserAccountAccess;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -19,18 +21,13 @@ class OwnerController extends Controller
     {
         ini_set('memory_limit', '512M');
 
-        if (! auth()->user()->can('customers.view')) {
+        if (! UserAccountAccess::hasManagementPermission($request->user(), 'customers.view')) {
             abort(403, 'Unauthorized action.');
         }
 
-        $owners = Owner::orderBy('created_at', 'DESC')
-            ->with(['properties', 'businesses'])
-            ->when(! empty($request->user()->assembly_code), function ($query) use ($request) {
-                $query->where('assembly_code', $request->user()->assembly_code);
-            })
-            ->when($request->user()->access_level === 'Assembly_Administrator', function ($query) use ($request) {
-                $query->where('assembly_code', $request->user()->assembly_code);
-            })
+        $owners = OwnerRecordAccess::visibleOwners(Owner::query(), $request->user())->orderBy('created_at', 'DESC')
+            ->with(['properties' => fn ($query) => OwnerRecordAccess::visibleAssets($query, $request->user()),
+                'businesses' => fn ($query) => OwnerRecordAccess::visibleAssets($query, $request->user())])
 //            ->when($request->filled('country_of_citizenship'), function ($query) use ($request) {
 //                $query->where('country_of_citizenship', $request->country_of_citizenship);
 //            })
@@ -134,7 +131,7 @@ class OwnerController extends Controller
                 })
                 ->rawColumns(['action'])
                 ->orderColumn('created_at', function ($query, $order) {
-                    $query->orderBy('owners.created_at', $order);
+                    $query->orderBy($query->getModel()->qualifyColumn('created_at'), $order);
                 })
                 ->make(true);
         }
@@ -144,6 +141,7 @@ class OwnerController extends Controller
 
     public function create(Request $request)
     {
+        abort_unless(UserAccountAccess::hasManagementPermission($request->user(), 'customers.create'), 403);
         $assemblies = Assembly::orderBy('name', 'ASC')
             ->when(! empty($request->user()->regional_code), function ($query) use ($request) {
                 $query->where('regional_code', $request->user()->regional_code);
@@ -215,13 +213,16 @@ class OwnerController extends Controller
         return redirect()->route('owners.index')->with('status', 'Rate Payer created successfully!');
     }
 
-    public function show(Owner $owner)
+    public function show(Request $request, Owner $owner)
     {
+        abort_unless(OwnerRecordAccess::visibleOwners(Owner::query(), $request->user())->whereKey($owner->id)->exists(), 403);
+
         return view('owners.show', compact('owner'));
     }
 
     public function edit(Request $request, Owner $owner)
     {
+        abort_unless(OwnerRecordAccess::mayUpdate($request->user(), $owner, $request), 403);
         $assemblies = Assembly::orderBy('name', 'ASC')
             ->when(! empty($request->user()->regional_code), function ($query) use ($request) {
                 $query->where('regional_code', $request->user()->regional_code);
@@ -239,16 +240,6 @@ class OwnerController extends Controller
         $data = $request->validated();
         $data['fname'] = $request->input('first_name');
         $data['lname'] = $request->input('last_name');
-
-        // Auto-assign assembly_code from authenticated user if not provided
-        if (empty($data['assembly_code']) && ! empty($request->user()->assembly_code)) {
-            $data['assembly_code'] = $request->user()->assembly_code;
-        }
-
-        // Auto-assign regional_code from authenticated user if not provided
-        if (empty($data['regional_code']) && ! empty($request->user()->regional_code)) {
-            $data['regional_code'] = $request->user()->regional_code;
-        }
 
         $owner->update($data);
 

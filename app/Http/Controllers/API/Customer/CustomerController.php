@@ -10,12 +10,14 @@ use App\Models\Owner;
 use App\Models\Property;
 use App\Models\User;
 use App\Support\NewAccountSetup;
+use App\Support\OwnerRecordAccess;
+use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $data = Owner::orderBy('created_at', 'DESC')
+        $data = OwnerRecordAccess::visibleOwners(Owner::query(), $request->user())->orderBy('created_at', 'DESC')
             ->paginate(100);
 
         return response()->json([
@@ -42,6 +44,12 @@ class CustomerController extends Controller
         $data['created_by'] = $request->user()->id;
         $data['fname'] = $request->input('first_name');
         $data['lname'] = $request->input('last_name');
+        if (filled($request->user()->assembly_code)) {
+            $data['assembly_code'] = $request->user()->assembly_code;
+        }
+        if (filled($request->user()->regional_code)) {
+            $data['regional_code'] = $request->user()->regional_code;
+        }
 
         $userLoginData = [
             'name' => $data['first_name'].' '.$data['last_name'],
@@ -126,9 +134,9 @@ class CustomerController extends Controller
         ] + NewAccountSetup::response());
     }
 
-    public function show($uuid)
+    public function show(Request $request, $uuid)
     {
-        $customer = Owner::query()
+        $customer = OwnerRecordAccess::visibleOwners(Owner::query(), $request->user())
             ->where(function ($query) use ($uuid) {
                 $query->whereUuidOrId($uuid)
                     ->orWhere('erms_id', $uuid);
@@ -147,10 +155,11 @@ class CustomerController extends Controller
         ]);
     }
 
-    public function multipleParam($uuid)
+    public function multipleParam(Request $request, $uuid)
     {
-        $customer = Owner::with([
+        $customer = OwnerRecordAccess::visibleOwners(Owner::query(), $request->user())->with([
             'user',
+            'properties' => fn ($query) => OwnerRecordAccess::visibleAssets($query, $request->user()),
             'properties.polygon.block.division',
             'properties.polygon:id,cntr_x_coord,cntr_y_coord,block_id',
         ])
@@ -207,11 +216,13 @@ class CustomerController extends Controller
         ]);
     }
 
-    public function globalSearch($uuid)
+    public function globalSearch(Request $request, $uuid)
     {
-        $customer = Owner::with([
+        $customer = OwnerRecordAccess::visibleOwners(Owner::query(), $request->user())->with([
+            'properties' => fn ($query) => OwnerRecordAccess::visibleAssets($query, $request->user()),
             'properties.customer:id,erms_id,fname,lname,phone_no_primary,email,tin_no',
-            'properties.bills.payments',
+            'properties.bills' => fn ($query) => OwnerRecordAccess::visibleAssets($query, $request->user()),
+            'properties.bills.payments' => fn ($query) => OwnerRecordAccess::visibleAssets($query, $request->user()),
             'properties.assembly',
             'properties.polygon.block.division',
             'properties.polygon:id,cntr_x_coord,cntr_y_coord,block_id',
@@ -227,9 +238,9 @@ class CustomerController extends Controller
             })
             ->get();
 
-        $property = Property::with([
-            'customer' => function ($query) {
-                $query->select(
+        $property = OwnerRecordAccess::visibleAssets(Property::query(), $request->user())->with([
+            'customer' => function ($query) use ($request) {
+                OwnerRecordAccess::visibleOwners($query, $request->user())->select(
                     'id',
                     'erms_id',
                     'fname',
@@ -239,7 +250,8 @@ class CustomerController extends Controller
                     'digital_address'
                 );
             },
-            'bills.payments',
+            'bills' => fn ($query) => OwnerRecordAccess::visibleAssets($query, $request->user()),
+            'bills.payments' => fn ($query) => OwnerRecordAccess::visibleAssets($query, $request->user()),
             'polygon.block.division',
             'polygon:id,cntr_x_coord,cntr_y_coord,block_id',
         ])

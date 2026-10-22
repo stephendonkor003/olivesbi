@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\API\Customer;
 
+use App\Support\OwnerRecordAccess;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CreateCustomerRequest extends FormRequest
@@ -11,13 +13,14 @@ class CreateCustomerRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->route()?->getActionMethod() === 'frontstore'
+            || OwnerRecordAccess::mayCreate($this->user(), $this);
     }
 
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

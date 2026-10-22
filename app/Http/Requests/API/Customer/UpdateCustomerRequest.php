@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests\API\Customer;
 
+use App\Models\Owner;
+use App\Support\OwnerRecordAccess;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateCustomerRequest extends FormRequest
@@ -11,13 +14,17 @@ class UpdateCustomerRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $owner = Owner::query()->where(function ($query) {
+            $query->whereUuidOrId($this->route('uuid'))->orWhere('erms_id', $this->route('uuid'));
+        })->first();
+
+        return OwnerRecordAccess::mayUpdate($this->user(), $owner, $this);
     }
 
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
