@@ -2,32 +2,33 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
     "license": "MIT",
     "require": {
-        "php": "^8.1",
+        "php": "^8.2",
         "alhaji-aki/laravel-sms": "^0.2.0",
-        "doctrine/dbal": "^3.9",
         "guzzlehttp/guzzle": "^7.2",
-        "laravel/framework": "^10.10",
-        "laravel/sanctum": "^3.2",
+        "laravel/framework": "^12.69",
+        "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.8",
-        "laravelcollective/html": "^6.4",
         "maatwebsite/excel": "^3.1",
         "mpdf/mpdf": "^8.2",
         "propaganistas/laravel-phone": "^5.3",
         "simplesoftwareio/simple-qrcode": "^4.2",
-        "spatie/laravel-permission": "^5.11",
+        "spatie/laravel-permission": "^6.0",
         "thecodingmachine/safe": "^3.3",
-        "yajra/laravel-datatables-oracle": "^10.11"
+        "yajra/laravel-datatables-oracle": "^12.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
         "laravel/pint": "^1.0",
         "laravel/sail": "^1.18",
         "mockery/mockery": "^1.4.4",
-        "nunomaduro/collision": "^7.0",
-        "phpunit/phpunit": "^10.1",
+        "nunomaduro/collision": "^8.1",
+        "phpunit/phpunit": "^11.5",
         "spatie/laravel-ignition": "^2.0"
     },
     "autoload": {
