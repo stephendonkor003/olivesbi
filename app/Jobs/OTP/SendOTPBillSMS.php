@@ -2,12 +2,15 @@
 
 namespace App\Jobs\OTP;
 
-use App\Actions\SMS\SendSMS;
+use App\Actions\SMS\SendSensitiveSMS;
+use App\Models\OTP;
+use App\Support\BillOtpCodes;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Validation\ValidationException;
 
 class SendOTPBillSMS implements ShouldQueue
 {
@@ -16,11 +19,19 @@ class SendOTPBillSMS implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    protected $otp;
+    protected ?int $otpId = null;
+
+    protected ?string $billId = null;
+
+    protected ?string $codeIdentity = null;
 
     public function __construct($otp)
     {
-        $this->otp = $otp;
+        if ($otp instanceof OTP) {
+            $this->otpId = $otp->getKey();
+            $this->billId = $otp->bills_id;
+            $this->codeIdentity = hash_hmac('sha256', (string) $otp->code, config('app.key'));
+        }
     }
 
     /**
@@ -28,17 +39,22 @@ class SendOTPBillSMS implements ShouldQueue
      */
     public function handle(): void
     {
-        $msg = 'Your bill activation code is '.$this->otp->code;
-        $phone = '';
-
-        if ($this->otp?->bill) {
-            if (is_null($this->otp->bill->business_id) && $this->otp->bill->property) {
-                $phone = $this->otp->bill->property?->customer?->phone_no_primary ?? '';
-            } elseif (is_null($this->otp->bill->property_id) && $this->otp->bill->business) {
-                $phone = $this->otp->bill->business?->customer?->phone_no_primary ?? '';
+        $otp = null;
+        try {
+            SendSensitiveSMS::ensureAvailable();
+            $current = OTP::query()->whereKey($this->otpId)->first();
+            if (! $current || (string) $current->bills_id !== $this->billId || $this->codeIdentity === null
+                || ! hash_equals($this->codeIdentity, hash_hmac('sha256', (string) $current->code, config('app.key')))) {
+                throw ValidationException::withMessages(['code' => 'The bill verification code is invalid or expired.']);
             }
+            $otp = $current;
+            $phone = BillOtpCodes::recipient($otp);
+            SendSensitiveSMS::sendSMS($phone, 'Your bill activation code is '.$otp->code);
+        } catch (\Throwable $exception) {
+            if ($otp instanceof OTP) {
+                BillOtpCodes::discardFailed($otp);
+            }
+            throw $exception;
         }
-
-        SendSMS::sendSMS($phone, $msg);
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\API\OTP;
 
+use App\Support\UserAccountAccess;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SendOTPRequest extends FormRequest
@@ -11,18 +13,18 @@ class SendOTPRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return UserAccountAccess::hasManagementPermission($this->user(), 'bills.update');
     }
 
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'bills_id' => ['required', 'string', 'exists:bills,bills_id'],
+            'bills_id' => ['required', 'string'],
         ];
     }
 }

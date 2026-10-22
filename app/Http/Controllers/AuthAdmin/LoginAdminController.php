@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\AuthAdmin;
 
+use App\Actions\SMS\SendSensitiveSMS;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ChangePasswordRequest;
 use App\Http\Requests\Auth\LoginAdminRequest;
@@ -11,6 +12,7 @@ use App\Jobs\OTP\SendPasswordChangeOTPSMS;
 use App\Models\CustomerType;
 use App\Models\User;
 use App\Support\OlivesCardNumber;
+use App\Support\PasswordResetCodes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -107,6 +109,7 @@ class LoginAdminController extends Controller
             ]);
         }
 
+        SendSensitiveSMS::ensureAvailable();
         dispatch(new SendPasswordChangeOTPSMS($user));
 
         return redirect()->route('auth.changePasswordFront')->with('status', 'OTP for password reset sent successfully');
@@ -119,7 +122,7 @@ class LoginAdminController extends Controller
 
     public function changePasswordFrontWa(ChangePasswordChangePasswordRequest $request)
     {
-        \App\Support\PasswordResetCodes::reset($request->validated('code'), $request->validated('password'));
+        PasswordResetCodes::reset($request->validated('code'), $request->validated('password'));
 
         return redirect()->route('auth.index')->with('status', 'Password changed successfully');
     }
