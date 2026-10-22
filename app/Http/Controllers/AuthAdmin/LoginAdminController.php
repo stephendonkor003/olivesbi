@@ -9,7 +9,6 @@ use App\Http\Requests\ChangePassword\ChangePasswordRequest as ChangePasswordChan
 use App\Http\Requests\ChangePassword\SendOTPRequest;
 use App\Jobs\OTP\SendPasswordChangeOTPSMS;
 use App\Models\CustomerType;
-use App\Models\OTP;
 use App\Models\User;
 use App\Support\OlivesCardNumber;
 use Illuminate\Http\Request;
@@ -59,6 +58,7 @@ class LoginAdminController extends Controller
         }
 
         Auth::login($user);
+        session()->put('password_hash_web', $user->password);
 
         session()->regenerate();
         if (Hash::check(config('erms.default_password'), $user->password)) {
@@ -119,16 +119,7 @@ class LoginAdminController extends Controller
 
     public function changePasswordFrontWa(ChangePasswordChangePasswordRequest $request)
     {
-        $data = $request->validated();
-        $data['password'] = Hash::make($data['password']);
-
-        $otp = OTP::where('code', $data['code'])->first();
-
-        if ($otp) {
-            $user = User::where('id', $otp->citizen_id)->first();
-            $user->update($data);
-            OTP::where('citizen_id', $user->id)->delete();
-        }
+        \App\Support\PasswordResetCodes::reset($request->validated('code'), $request->validated('password'));
 
         return redirect()->route('auth.index')->with('status', 'Password changed successfully');
     }

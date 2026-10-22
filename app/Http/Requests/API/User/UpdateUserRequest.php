@@ -12,7 +12,9 @@ class UpdateUserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $target = \App\Models\User::query()->whereUuidOrId($this->route('uuid'))->first();
+
+        return \App\Support\UserAccountAccess::mayUpdate($this->user(), $target, $this, true);
     }
 
     /**
@@ -24,10 +26,12 @@ class UpdateUserRequest extends FormRequest
     {
         $hasAssemblyCode = ! empty($this->user()->assembly_code);
         $hasDivisionCode = ! empty($this->user()->division_code);
+        $regionCode = $this->user()->regional_code;
+        $assemblyCode = $this->user()->assembly_code ?: $this->input('assembly_code');
 
         return [
-            'assembly_code' => [Rule::excludeIf($hasAssemblyCode), 'required', Rule::exists('assemblies', 'assembly_code')],
-            'division_code' => [Rule::excludeIf($hasDivisionCode), 'required', Rule::exists('divisions', 'code')],
+            'assembly_code' => [Rule::excludeIf($hasAssemblyCode), 'required', Rule::exists('assemblies', 'assembly_code')->when(filled($regionCode), fn ($query) => $query->where('regional_code', $regionCode))],
+            'division_code' => [Rule::excludeIf($hasDivisionCode), 'required', Rule::exists('divisions', 'code')->where('assembly_code', $assemblyCode)],
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255',
             'password' => 'required|string|confirmed',

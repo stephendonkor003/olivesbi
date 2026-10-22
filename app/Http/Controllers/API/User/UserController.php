@@ -14,11 +14,9 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $data = User::orderBy('created_at', 'DESC')
+        $data = \App\Support\UserAccountAccess::visibleQuery(User::query(), $request->user())
+            ->orderBy('created_at', 'DESC')
             ->with(['assembly'])
-            ->when(! empty($request->user()->assembly_code), function ($query) use ($request) {
-                $query->where('assembly_code', $request->user()->assembly_code);
-            })
             ->get();
 
         return response()->json([
@@ -63,9 +61,9 @@ class UserController extends Controller
         ]);
     }
 
-    public function show($uuid)
+    public function show(Request $request, $uuid)
     {
-        $user = User::query()
+        $user = \App\Support\UserAccountAccess::visibleQuery(User::query(), $request->user())
             ->with(['assembly'])
             ->whereUuidOrId($uuid)
             ->first();
@@ -96,6 +94,8 @@ class UserController extends Controller
                 'message' => 'User not found',
             ], 422);
         }
+
+        $data = \App\Support\UserAccountAccess::writableApiFields($request->user(), $user, $data);
 
         if (empty($request->validated('password'))) {
             $data['password'] = $user->password;

@@ -17,8 +17,11 @@ use App\Http\Controllers\Citizens\CitizenController;
 use App\Http\Controllers\CustomerSupport\CustomerSupportController;
 use App\Http\Controllers\CustomerType\CustomerTypeController;
 use App\Http\Controllers\Dashboard;
+use App\Http\Controllers\Dashboard\AccountDashboardController;
 use App\Http\Controllers\Divisions\DivisionController;
+use App\Http\Controllers\Donation\DonationController;
 use App\Http\Controllers\ItemDescription\ItemDescriptionController;
+use App\Http\Controllers\Locality\LocalityBusinessController;
 use App\Http\Controllers\MainItem\MainItemController;
 use App\Http\Controllers\Mmda\MmdaController;
 use App\Http\Controllers\NewBlock\NewBlockController;
@@ -33,6 +36,7 @@ use App\Http\Controllers\PropertyClasses\PropertyClassesController;
 use App\Http\Controllers\PropertyRevenue\PropertyRevenueController;
 use App\Http\Controllers\PropertyType\PropertyTypeController;
 use App\Http\Controllers\PropertyUser\PropertyUserController;
+use App\Http\Controllers\PublicProPaymentRequestController;
 use App\Http\Controllers\Rate\BusRateController;
 use App\Http\Controllers\Rate\RateController;
 use App\Http\Controllers\Report;
@@ -43,20 +47,16 @@ use App\Http\Controllers\SubItem\SubItemController;
 use App\Http\Controllers\TaskAssignment\TaskAssignmentController;
 use App\Http\Controllers\User;
 use App\Http\Controllers\Zone\ZoneController;
-use App\Http\Controllers\Donation\DonationController;
-use App\Http\Controllers\Dashboard\AccountDashboardController;
-use App\Http\Controllers\Locality\LocalityBusinessController;
-use App\Http\Controllers\PublicProPaymentRequestController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/faqAction', [Dashboard\DashboardController::class, 'faqAction'])->name('dashboard.faq');
 
 // ── SUPPORT / DONATIONS (public — no auth required)
-Route::get('/support',                [DonationController::class, 'index'])->name('donation.index');
-Route::post('/donate/stripe',         [DonationController::class, 'initializeStripe'])->name('donation.stripe');
-Route::get('/donate/verify/paystack',    [DonationController::class, 'verifyPaystack'])->name('donation.verify.paystack');
+Route::get('/support', [DonationController::class, 'index'])->name('donation.index');
+Route::post('/donate/stripe', [DonationController::class, 'initializeStripe'])->name('donation.stripe');
+Route::get('/donate/verify/paystack', [DonationController::class, 'verifyPaystack'])->name('donation.verify.paystack');
 Route::get('/donate/verify/flutterwave', [DonationController::class, 'verifyFlutterwave'])->name('donation.verify.flutterwave');
-Route::get('/donate/verify/stripe',      [DonationController::class, 'verifyStripe'])->name('donation.verify.stripe');
+Route::get('/donate/verify/stripe', [DonationController::class, 'verifyStripe'])->name('donation.verify.stripe');
 Route::get('/pay/{paymentRequest}', [PublicProPaymentRequestController::class, 'show'])->name('public.pro-payment-requests.show');
 Route::match(['get', 'post'], '/pay/{paymentRequest}/callback', [PublicProPaymentRequestController::class, 'callback'])
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
@@ -270,9 +270,9 @@ Route::prefix('')->group(function () {
         Route::post('/frontstore', [CitizenController::class, 'frontstore'])->name('citizens.frontstore');
         Route::post('/login', [AuthAdmin\LoginAdminController::class, 'login'])->name('auth.login');
         Route::get('/change/password/front', [AuthAdmin\LoginAdminController::class, 'changePasswordFront'])->name('auth.changePasswordFront');
-        Route::post('/change/password/front', [AuthAdmin\LoginAdminController::class, 'changePasswordFrontWa'])->name('auth.changePasswordFrontWa');
+        Route::post('/change/password/front', [AuthAdmin\LoginAdminController::class, 'changePasswordFrontWa'])->middleware('throttle:5,1')->name('auth.changePasswordFrontWa');
         Route::get('/send/otp', [AuthAdmin\LoginAdminController::class, 'sendOTP'])->name('auth.sendOTP');
-        Route::post('/send/otp', [AuthAdmin\LoginAdminController::class, 'sendUserOTP'])->name('auth.sendUserOTP');
+        Route::post('/send/otp', [AuthAdmin\LoginAdminController::class, 'sendUserOTP'])->middleware('throttle:5,1')->name('auth.sendUserOTP');
     });
 
     Route::middleware('auth')->group(function () {

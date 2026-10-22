@@ -12,7 +12,7 @@ class CreateUserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return \App\Support\UserAccountAccess::mayCreate($this->user(), $this);
     }
 
     /**
@@ -53,7 +53,7 @@ class CreateUserRequest extends FormRequest
             'phone' => 'required|string|phone:GH|max:15|unique:users,phone',
             'access_level' => 'required|string',
             'status' => 'required|string',
-            'role' => 'required|string',
+            'role' => ['required', 'string', Rule::exists('roles', 'id')->where('active', true)->where('guard_name', 'web')],
             'gender' => 'required|string',
             // 'assembly_code' => 'required_if:access_level,Assembly_Supervisor|nullable|string',
             // 'division_code' => 'required_if:access_level,Assembly_Supervisor|nullable|string',

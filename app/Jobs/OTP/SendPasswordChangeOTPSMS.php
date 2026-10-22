@@ -31,7 +31,10 @@ class SendPasswordChangeOTPSMS implements ShouldQueue
     {
         OTP::query()->where('user_id', $this->user->id)->where('type', 'password')->delete();
 
-        $otp = mt_rand(100000, 999999);
+        do {
+            $otp = random_int(100000, 999999);
+        } while (OTP::query()->where('type', 'password')->where('code', $otp)
+            ->where('created_at', '>=', now()->subMinutes(\App\Support\PasswordResetCodes::LIFETIME_MINUTES))->exists());
 
         $data = [
             'user_id' => $this->user->id,

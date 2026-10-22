@@ -41,8 +41,8 @@ Route::post('/payment/callback', [PaymentController::class, 'paymentCallback'])-
 Route::post('/payment/paystack/webhook', [PaymentController::class, 'handlePaymentPaystackWebhook']);
 
 Route::post('/login', [LoginController::class, 'index']);
-Route::post('/send/otp', [LoginController::class, 'sendOTP']);
-Route::post('/change/password', [LoginController::class, 'changePassword']);
+Route::post('/send/otp', [LoginController::class, 'sendOTP'])->middleware('throttle:5,1');
+Route::post('/change/password', [LoginController::class, 'changePassword'])->middleware('throttle:5,1');
 Route::post('/customer/create/front', [CustomerController::class, 'frontstore']);
 
 Route::group(['prefix' => 'user'], function () {
@@ -137,7 +137,6 @@ Route::group(['prefix' => 'business', 'middleware' => 'auth:sanctum'], function 
     Route::get('/show/{uuid}', [BusinessController::class, 'show']);
     Route::get('/customer/{uuid}', [BusinessController::class, 'customerBusiness']);
 });
-
 
 Route::group(['prefix' => 'ussd', 'middleware' => 'auth:sanctum'], function () {
     Route::get('/customer/{phone}', [USSDController::class, 'customerInfo']);

@@ -12,7 +12,7 @@ class UpdateUserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return \App\Support\UserAccountAccess::mayUpdate($this->user(), $this->route('user'), $this);
     }
 
     /**
@@ -59,7 +59,7 @@ class UpdateUserRequest extends FormRequest
             'phone' => 'required|string|phone:GH|max:15|unique:users,phone,'.$user->id,
             'access_level' => 'required|string',
             'status' => 'required|string',
-            'role' => 'required|string',
+            'role' => ['required', 'string', Rule::exists('roles', 'id')->where('active', true)->where('guard_name', 'web')],
             'gender' => 'nullable|string',
         ];
     }

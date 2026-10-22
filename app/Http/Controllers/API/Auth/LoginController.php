@@ -8,7 +8,6 @@ use App\Http\Requests\API\Auth\LoginRequest;
 use App\Http\Requests\API\ChangePassword\ChangePasswordRequest;
 use App\Http\Requests\API\ChangePassword\SendOTPRequest;
 use App\Jobs\OTP\SendPasswordChangeOTPSMS;
-use App\Models\OTP;
 use App\Models\User;
 use App\Support\OlivesCardNumber;
 use Illuminate\Http\Request;
@@ -85,15 +84,7 @@ class LoginController extends Controller
 
     public function changePassword(ChangePasswordRequest $request)
     {
-        $data = $request->validated();
-        $data['password'] = Hash::make($data['password']);
-
-        $otp = OTP::where('code', $data['code'])->first();
-
-        if ($otp) {
-            $user = User::where('id', $otp->citizen_id)->first();
-            $user->update($data);
-        }
+        \App\Support\PasswordResetCodes::reset($request->validated('code'), $request->validated('password'));
 
         return response()->json([
             'message' => 'Password changed successfully',

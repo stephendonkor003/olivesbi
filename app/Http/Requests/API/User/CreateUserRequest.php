@@ -12,7 +12,7 @@ class CreateUserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return \App\Support\UserAccountAccess::mayCreate($this->user(), $this);
     }
 
     /**
@@ -24,10 +24,12 @@ class CreateUserRequest extends FormRequest
     {
         $hasAssemblyCode = ! empty($this->user()->assembly_code);
         $hasDivisionCode = ! empty($this->user()->division_code);
+        $regionCode = $this->user()->regional_code;
+        $assemblyCode = $this->user()->assembly_code ?: $this->input('assembly_code');
 
         return [
-            'assembly_code' => [Rule::excludeIf($hasAssemblyCode), 'required', Rule::exists('assemblies', 'assembly_code')],
-            'division_code' => [Rule::excludeIf($hasDivisionCode), 'required', Rule::exists('divisions', 'code')],
+            'assembly_code' => [Rule::excludeIf($hasAssemblyCode), 'required', Rule::exists('assemblies', 'assembly_code')->when(filled($regionCode), fn ($query) => $query->where('regional_code', $regionCode))],
+            'division_code' => [Rule::excludeIf($hasDivisionCode), 'required', Rule::exists('divisions', 'code')->where('assembly_code', $assemblyCode)],
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|string|confirmed',

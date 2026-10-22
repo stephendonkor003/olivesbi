@@ -22,18 +22,13 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        if (! auth()->user()->can('users.view')) {
+        if (! \App\Support\UserAccountAccess::hasManagementPermission($request->user(), 'users.view')) {
             abort(403, 'Unauthorized action.');
         }
 
-        $userQuery = User::orderBy('created_at', 'DESC')
+        $userQuery = \App\Support\UserAccountAccess::visibleQuery(User::query(), $request->user())
+            ->orderBy('created_at', 'DESC')
             ->whereNotIn('access_level', ['Rate Payer', 'Customer'])
-            ->when(! empty($request->user()->regional_code), function ($query) use ($request) {
-                $query->where('regional_code', $request->user()->regional_code);
-            })
-            ->when(! empty($request->user()->assembly_code), function ($query) use ($request) {
-                $query->where('assembly_code', $request->user()->assembly_code);
-            })
             ->when($request->display == 'agent', function ($query) {
                 $query->where('access_level', 'Assembly_Agent');
             })
@@ -73,7 +68,7 @@ class UserController extends Controller
 
     public function create(Request $request)
     {
-        if (! auth()->user()->can('users.create')) {
+        if (! \App\Support\UserAccountAccess::hasManagementPermission($request->user(), 'users.create')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -155,6 +150,8 @@ class UserController extends Controller
 
     public function show(User $user)
     {
+        abort_unless(\App\Support\UserAccountAccess::mayView(auth()->user(), $user), 403);
+
         return view('users.show')->with([
             'user' => $user,
         ]);
@@ -162,7 +159,7 @@ class UserController extends Controller
 
     public function edit(User $user, Request $request)
     {
-        if (! auth()->user()->can('users.update')) {
+        if (! \App\Support\UserAccountAccess::mayUpdate($request->user(), $user, $request)) {
             abort(403, 'Unauthorized action.');
         }
 

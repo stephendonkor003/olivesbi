@@ -22,8 +22,8 @@ class ChangePasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => ['required', 'exists:otps,code'],
-            'password' => ['required', 'confirmed'],
+            'code' => ['required', 'digits:6'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ];
     }
 }
