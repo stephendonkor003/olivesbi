@@ -9,6 +9,9 @@ use App\Models\AuditTrail;
 use App\Models\Bill;
 use App\Models\Payment;
 use App\Models\ServiceRequest;
+use App\Support\PaymentAmounts;
+use App\Support\PaymentRecordAccess;
+use App\Support\PaystackPaymentSettlement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -137,6 +140,10 @@ class PaymentController extends Controller
 
     public function store(CreatePaymentRequest $request)
     {
+        $bill = PaymentRecordAccess::creationBill($request);
+        if ($request->input('payment_mode') === 'momo') {
+            abort_unless(is_string(config('services.paystack.secret_key')) && trim(config('services.paystack.secret_key')) !== '', 503, 'Payment provider unavailable');
+        }
         do {
             $transactionID = str_pad(mt_rand(1, 999999999999), 12, '0', STR_PAD_LEFT);
         } while (Payment::where('transaction_id', $transactionID)->exists());
@@ -144,26 +151,32 @@ class PaymentController extends Controller
         if ($request->hasFile('receipt')) {
             $image = $request->file('receipt');
             $image_name = Payment::generateImageFileName();
-            $image_name = $image_name . '.' . $image->getClientOriginalExtension();
+            $extension = $image->guessExtension();
+            abort_unless(in_array($extension, ['jpg', 'jpeg', 'png', 'pdf'], true), 422, 'Unsupported receipt');
+            $image_name = $image_name . '.' . $extension;
             $receiptDestinationPath = storage_path('app/public/images/receipt');
             $image->move($receiptDestinationPath, $image_name);
         }
 
         $paymentData = [
-            'bills_id' => $request->input('bills_id'),
-            'amount' => $request->input('amount'),
+            'bills_id' => $bill->bills_id,
+            'amount' => PaymentAmounts::decimal($request->input('amount')),
             'payment_mode' => $request->input('payment_mode'),
             'payment_source' => 'Paystack',
             'phone' => $request->input('phone'),
             'network' => $request->input('network'),
             'transaction_id' => $request->input('payment_mode') == 'momo' ? $transactionID : null,
             'transaction_status' => $request->input('payment_mode') == 'momo' ? 'Pending' : 'Success',
-            'assembly_code' => $request->input('assembly_code'),
+            'assembly_code' => $bill->assembly_code,
             'receipt' => $image_name ?? null,
             'created_by' => $request->user()->id ?? null,
         ];
 
-        $payment = Payment::create($paymentData);
+        $payment = DB::transaction(function () use ($request, $paymentData) {
+            $bill = PaymentRecordAccess::creationBill($request, true);
+            $paymentData['assembly_code'] = $bill->assembly_code;
+            return Payment::create($paymentData);
+        });
 
         if ($request->input('payment_mode') == 'momo') {
             $reference = $payment->transaction_id;
@@ -192,7 +205,7 @@ class PaymentController extends Controller
 
             $paystackData = [
                 'email' => $paystackEmail,
-                'amount' => $request->amount * 100,
+                'amount' => PaymentAmounts::minor($payment->amount),
                 'reference' => $reference,
                 'callback_url' => route('payments.verify'),
                 'currency' => 'GHS',
@@ -201,8 +214,10 @@ class PaymentController extends Controller
             $response = Http::withToken(config('services.paystack.secret_key'))
                 ->post('https://api.paystack.co/transaction/initialize', $paystackData);
 
-            if ($response->successful()) {
-                $authUrl = $response->json()['data']['authorization_url'];
+            if ($response->successful() && $response->json('status') === true
+                && $response->json('data.reference') === $reference
+                && is_string($response->json('data.authorization_url'))) {
+                $authUrl = $response->json('data.authorization_url');
                 $payment->update(['authorization_url' => $authUrl]);
 
                 return redirect($authUrl);
@@ -259,106 +274,62 @@ class PaymentController extends Controller
 
     public function makePayment(Request $request)
     {
-        $paymentId = $request->input('payment_id');
-
-        $payment = Payment::where('id', $paymentId)->first();
-
-        $payment->update(['transaction_status' => 'Success']);
-
-        // Send SMS
-        dispatch(new SendPaymentSMS($payment));
-
+        $request->validate(['payment_id' => ['required', 'integer', 'exists:payments,id']]);
+        $payment = DB::transaction(function () use ($request) {
+            $payment = Payment::whereKey($request->input('payment_id'))->lockForUpdate()->firstOrFail();
+            $bill = $payment->bill;
+            abort_unless($bill && PaymentRecordAccess::scopedStaff($request->user(), $bill)
+                && (string) $payment->assembly_code === (string) $bill->assembly_code, 403);
+            abort_unless($payment->payment_mode === 'cash', 422, 'Online payments require provider verification');
+            try {
+                PaymentAmounts::minor($payment->amount);
+            } catch (\InvalidArgumentException) {
+                abort(422, 'Invalid payment amount');
+            }
+            if (strtolower((string) $payment->transaction_status) === 'success') {
+                return null;
+            }
+            abort_unless(in_array(strtolower((string) $payment->transaction_status), ['pending', 'failed'], true), 422);
+            $payment->update(['transaction_status' => 'Success']);
+            return $payment;
+        });
+        if ($payment) {
+            dispatch(new SendPaymentSMS($payment));
+        }
         session()->flash('status', 'Payment made successfully');
-
         return response()->json(['message' => 'Payment made successfully']);
     }
 
     public function verify(Request $request)
     {
         $reference = $request->query('reference');
-
-        if (!$reference) {
+        if (! is_string($reference) || $reference === '') {
             return redirect()->route('payments.index')->with('error', 'Missing transaction reference.');
         }
-
-        // Call Paystack API
-        $response = Http::withToken(config('services.paystack.secret_key'))
-            ->get("https://api.paystack.co/transaction/verify/{$reference}");
-
-        if ($response->failed()) {
-            return redirect()->route('payments.index')->with('error', 'Unable to verify payment.');
+        $key = config('services.paystack.secret_key');
+        abort_unless(is_string($key) && trim($key) !== '', 503, 'Payment provider unavailable');
+        $response = Http::withToken($key)->timeout(15)->connectTimeout(5)
+            ->get('https://api.paystack.co/transaction/verify/'.rawurlencode($reference));
+        $payment = $response->successful() && $response->json('status') === true
+            ? PaystackPaymentSettlement::settle($reference, $response->json('data')) : null;
+        if (! $payment) {
+            return redirect()->route('payments.index')->with('error', 'Payment verification did not match.');
         }
-
-        $data = $response->json('data');
-
-        \Log::info('Paystack response data ', $data);
-
-        if ($data['status'] !== 'success') {
-            return redirect()->route('payments.index')->with('error', 'Payment not successful.');
-        }
-
-        // Verify amount and update DB
-        $payment = Payment::where('transaction_id', $reference)->first();
-
-        if (!$payment) {
-            return redirect()->route('payments.index')->with('error', 'Payment record not found.');
-        }
-
-        if ((int)$payment->amount !== (int)($data['amount'] / 100)) {
-            return redirect()->route('payments.index')->with('error', 'Amount mismatch detected.');
-        }
-
-        $payment->update([
-            'transaction_status' => 'Success',
-            'payment_mode' => $data['channel'] ?? 'paystack',
-        ]);
-
-        \Log::info('Paystack verification route hit', ['reference' => $request->reference]);
-
         return redirect()->route('payments.index')->with('status', 'Payment verified successfully.');
     }
 
     public function publicVerify(Request $request)
     {
         $reference = $request->query('reference');
-
-        if (!$reference) {
-            abort(404);
-        }
-
-        // Call Paystack API
-        $response = Http::withToken(config('services.paystack.secret_key'))
+        abort_unless(is_string($reference) && $reference !== '', 404);
+        $key = config('services.paystack.secret_key');
+        abort_unless(is_string($key) && trim($key) !== '', 503, 'Payment provider unavailable');
+        $response = Http::withToken($key)->timeout(15)->connectTimeout(5)
             ->baseUrl(config('services.paystack.url'))
-            ->get("transaction/verify/{$reference}");
-
-        if ($response->failed()) {
-            abort(404);
-        }
-
-        // Verify amount and update DB
-        $payment = Payment::with('bill')
-            ->where('transaction_id', $reference)
-            ->first();
-
-        if (!$payment) {
-            abort(404);
-        }
-
-        if ($payment->transaction_status == 'Success') {
-            return redirect()->route('admin.public.bills.show', $payment->bill)->with('status', 'Payment completed successfully.');
-        }
-
-        $data = $response->json('data');
-
-        if ($payment->amount != ($data['amount'] / 100)) {
-            abort(404);
-        }
-
-        $payment->update([
-            'transaction_status' => strtolower((string) $data['status']) === 'success' ? 'Success' : $data['status'],
-            'payment_mode' => $data['channel'] ?? 'paystack',
-        ]);
-
+            ->get('transaction/verify/'.rawurlencode($reference));
+        $payment = $response->successful() && $response->json('status') === true
+            ? PaystackPaymentSettlement::settle($reference, $response->json('data')) : null;
+        abort_unless($payment, 404);
         return redirect()->route('admin.public.bills.show', $payment->bill)->with('status', 'Payment completed successfully.');
     }
 }
